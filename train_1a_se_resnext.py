@@ -55,7 +55,7 @@ opt.TRAIN.BATCH_SIZE = 36
 opt.TRAIN.SHUFFLE = True
 opt.TRAIN.WORKERS = 12
 opt.TRAIN.PRINT_FREQ = 20
-opt.TRAIN.SEED = None
+opt.TRAIN.SEED = 7
 opt.TRAIN.LEARNING_RATE = 1e-4
 opt.TRAIN.LR_GAMMA = 0.5
 opt.TRAIN.LR_MILESTONES = [4, 6, 8, 10, 12, 14]
@@ -66,7 +66,6 @@ opt.TRAIN.STEPS_PER_EPOCH = 7000
 opt.TRAIN.RESUME = None if len(sys.argv) == 1 else sys.argv[1]
 
 opt.VALID = edict()
-opt.VALID.STEPS_PER_EPOCH = 2000
 
 if opt.TRAIN.SEED is None:
     opt.TRAIN.SEED = int(time.time())
@@ -240,9 +239,6 @@ def validate(val_loader, model, criterion):
     end = time.time()
     with torch.no_grad():
         for i, (input_, target) in enumerate(val_loader):
-            if i >= opt.VALID.STEPS_PER_EPOCH:
-                break
-
             target = target.cuda(async=True)
 
             # compute output
@@ -265,7 +261,7 @@ def validate(val_loader, model, criterion):
                             'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                             'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
                             'Prec@3 {top3.val:.3f} ({top3.avg:.3f})'.format(
-                            i, opt.VALID.STEPS_PER_EPOCH, batch_time=batch_time,
+                            i, len(val_loader), batch_time=batch_time,
                             loss=losses, top1=top1, top3=top3))
 
     logger.info(' * MAP@3 {top3.avg:.3f}'.format(top1=top1))
@@ -282,6 +278,7 @@ best_map3 = 0
 best_epoch = 0
 
 val_dataset.start_new_epoch()
+logger.info('{} images are found for validation'.format(len(val_dataset)))
 
 for epoch in range(last_epoch+1, opt.TRAIN.EPOCHS+1):
     logger.info('-'*50)
@@ -289,9 +286,7 @@ for epoch in range(last_epoch+1, opt.TRAIN.EPOCHS+1):
     logger.info('lr: {}'.format(lr_scheduler.get_lr()))
 
     train_dataset.start_new_epoch()
-
     logger.info('{} images are found for train'.format(len(train_dataset)))
-    logger.info('{} images are found for validation'.format(len(val_dataset)))
 
     train(train_loader, model, criterion, optimizer, epoch)
     map3 = validate(test_loader, model, criterion)

@@ -13,6 +13,7 @@ from tqdm import tqdm
 NpArray = Any
 
 SAVE_DEBUG_IMAGES = False
+MAX_VAL_SAMPLES = 200
 
 def get_file_table(root: str) -> DefaultDict[str, List[str]]:
     res: DefaultDict[str, List[str]] = defaultdict(list)
@@ -30,6 +31,7 @@ class DatasetFolder(data.Dataset):
         self.transform = transform
         self.num_classes = num_classes
         self.validation = val
+        self.epoch = 0
 
         classes = sorted(self.file_table.keys())
         self.class2idx = {cls_: idx for idx, cls_ in enumerate(classes)}
@@ -42,14 +44,16 @@ class DatasetFolder(data.Dataset):
         samples = []
 
         for name in tqdm(self.file_table):
+            files = self.file_table[name]
             if not self.validation:
-                samples.append(pd.read_csv(np.random.choice(self.file_table[name])))
+                samples.append(pd.read_csv(files[self.epoch % len(files)]))
             else:
-                samples.append(pd.read_csv(self.file_table[name][0]))
+                samples.append(pd.read_csv(files[0])[:MAX_VAL_SAMPLES])
 
         samples_df = pd.concat(samples)
         self.samples = samples_df["drawing"].values
         self.targets = [self.class2idx[c] for c in samples_df["word"].values]
+        self.epoch += 1
         print("done")
 
     def _create_image(self, strokes: str, idx: int) -> NpArray:
