@@ -48,7 +48,7 @@ opt.EXPERIMENT.TASK = 'finetune'
 opt.EXPERIMENT.DIR = osp.join(cfg.EXPERIMENT_DIR, opt.EXPERIMENT.CODENAME)
 
 opt.LOG = edict()
-opt.LOG.LOG_FILE = osp.join(opt.EXPERIMENT.DIR, 'log_{}.txt'.format(opt.EXPERIMENT.TASK))
+opt.LOG.LOG_FILE = osp.join(opt.EXPERIMENT.DIR, f'log_{opt.EXPERIMENT.TASK}.txt')
 
 opt.TRAIN = edict()
 opt.TRAIN.BATCH_SIZE = 36
@@ -83,7 +83,7 @@ logger = create_logger(opt.LOG.LOG_FILE)
 logger.info('Options:')
 logger.info(pprint.pformat(opt))
 
-msg = 'Use time as random seed: {}'.format(opt.TRAIN.SEED)
+msg = f'Use time as random seed: {opt.TRAIN.SEED}'
 logger.info(msg)
 
 
@@ -126,7 +126,7 @@ test_loader = torch.utils.data.DataLoader(
 
 # create model
 if opt.MODEL.PRETRAINED:
-    logger.info("=> using pre-trained model '{}'".format(opt.MODEL.ARCH ))
+    logger.info(f"using pre-trained model {opt.MODEL.ARCH}")
     model = pretrainedmodels.__dict__[opt.MODEL.ARCH](pretrained='imagenet')
 else:
     raise NotImplementedError
@@ -149,17 +149,17 @@ lr_scheduler = MultiStepLR(optimizer, opt.TRAIN.LR_MILESTONES, gamma=opt.TRAIN.L
 
 if opt.TRAIN.RESUME is None:
     last_epoch = 0
-    logger.info("Training will start from epoch {}".format(last_epoch+1))
+    logger.info(f"Training will start from epoch {last_epoch+1}")
 
 else:
     last_checkpoint = torch.load(opt.TRAIN.RESUME)
     assert(last_checkpoint['arch']==opt.MODEL.ARCH)
     model.module.load_state_dict(last_checkpoint['state_dict'])
     optimizer.load_state_dict(last_checkpoint['optimizer'])
-    logger.info("Checkpoint '{}' was loaded.".format(opt.TRAIN.RESUME))
+    logger.info(f"Checkpoint {opt.TRAIN.RESUME} was loaded.")
 
     last_epoch = last_checkpoint['epoch']
-    logger.info("Training will be resumed from epoch {}".format(last_checkpoint['epoch']))
+    logger.info(f"Training will be resumed from epoch {last_checkpoint['epoch']}")
 
 
 train_losses = []
@@ -171,10 +171,10 @@ val_top3 = []
 
 def save_checkpoint(state, filename='checkpoint.pk'):
     torch.save(state, osp.join(opt.EXPERIMENT.DIR, filename))
-    logger.info('A snapshot was saved to {}.'.format(filename))
+    logger.info(f'A snapshot was saved to {filename}')
 
 def train(train_loader, model, criterion, optimizer, epoch):
-    logger.info('Epoch {}'.format(epoch))
+    logger.info(f'Epoch {epoch}')
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
@@ -214,14 +214,12 @@ def train(train_loader, model, criterion, optimizer, epoch):
         end = time.time()
 
         if i % opt.TRAIN.PRINT_FREQ == 0:
-            logger.info('[{1}/{2}]\t'
-                        'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                        'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
-                        'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                        'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
-                        'Prec@3 {top3.val:.3f} ({top3.avg:.3f})'.format(
-                        epoch, i, opt.TRAIN.STEPS_PER_EPOCH, batch_time=batch_time,
-                        data_time=data_time, loss=losses, top1=top1, top3=top3))
+            logger.info(f'{epoch} [{i}/{opt.TRAIN.STEPS_PER_EPOCH}]\t'
+                        f'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+                        f'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
+                        f'Loss {losses.val:.4f} ({losses.avg:.4f})\t'
+                        f'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
+                        f'Prec@3 {top3.val:.3f} ({top3.avg:.3f})')
 
     train_losses.append(losses.avg)
     train_top1.append(top1.avg)
@@ -256,15 +254,13 @@ def validate(val_loader, model, criterion):
             end = time.time()
 
             if i % opt.TRAIN.PRINT_FREQ == 0:
-                logger.info('Test: [{0}/{1}]\t'
-                            'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                            'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                            'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
-                            'Prec@3 {top3.val:.3f} ({top3.avg:.3f})'.format(
-                            i, len(val_loader), batch_time=batch_time,
-                            loss=losses, top1=top1, top3=top3))
+                logger.info(f'Test {epoch} [{i}/{len(val_loader)}]\t'
+                            f'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+                            f'Loss {losses.val:.4f} ({losses.avg:.4f})\t'
+                            f'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
+                            f'Prec@3 {top3.val:.3f} ({top3.avg:.3f})')
 
-    logger.info(' * MAP@3 {top3.avg:.3f}'.format(top1=top1))
+    logger.info(f' * MAP@3 {top3.avg:.3f}')
 
     val_losses.append(losses.avg)
     val_top1.append(top1.avg)
