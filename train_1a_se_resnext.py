@@ -1,4 +1,5 @@
 #!/usr/bin/python3.6
+""" Trains a model. """
 
 import os
 import os.path as osp

@@ -5,22 +5,18 @@ from easydict import EasyDict as edict
 import torch
 
 
-__C = edict()
-cfg = __C
+cfg = edict()
 
-__C.ROOT_DIR = ".."
-__C.EXPERIMENT_DIR = osp.join(__C.ROOT_DIR, 'experiments')
-if not osp.exists(__C.EXPERIMENT_DIR):
-    os.makedirs(__C.EXPERIMENT_DIR)
+cfg.ROOT_DIR = ".."
+cfg.EXPERIMENT_DIR = osp.join(cfg.ROOT_DIR, 'models')
+if not osp.exists(cfg.EXPERIMENT_DIR):
+    os.makedirs(cfg.EXPERIMENT_DIR)
 
 
 # Prepare the datasets ---------------------------------------------------
-__C.DATASET = edict()
-
-__C.DATASET = edict()
-__C.DATASET.ROOT_DIR = osp.join(__C.ROOT_DIR, 'data')
-__C.DATASET.TEST_DIR = osp.join(__C.ROOT_DIR, 'data/test_outer')
-__C.DATASET.NUM_CLASSES = 7178         # For assertion
+cfg.DATASET = edict()
+cfg.DATASET.ROOT_DIR = osp.join(cfg.ROOT_DIR, 'data')
+cfg.DATASET.NUM_CLASSES = 340
 
 
 def create_logger(filename, logger_name='logger',
@@ -66,7 +62,7 @@ class AverageMeter(object):
 
 
 def accuracy(output, target, topk=(1,)):
-    """Computes the precision@k for the specified values of k"""
+    """ Computes the precision@k for the specified values of k """
     maxk = max(topk)
     batch_size = target.size(0)
 
@@ -79,4 +75,3 @@ def accuracy(output, target, topk=(1,)):
         correct_k = correct[:k].view(-1).float().sum(0, keepdim=True)
         res.append(correct_k.mul_(100.0 / batch_size))
     return res
-
