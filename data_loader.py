@@ -7,10 +7,12 @@ from typing import *
 import numpy as np, pandas as pd
 import torch.utils.data as data
 import matplotlib.pyplot as plt
-from PIL import Image
+from PIL import Image, ImageDraw
 from tqdm import tqdm
 
 NpArray = Any
+
+SAVE_DEBUG_IMAGES = False
 
 def get_file_table(root: str) -> DefaultDict[str, List[str]]:
     res: DefaultDict[str, List[str]] = defaultdict(list)
@@ -50,32 +52,30 @@ class DatasetFolder(data.Dataset):
         self.targets = [self.class2idx[c] for c in samples_df["word"].values]
         print("done")
 
-    def _create_image(self, strokes: str) -> NpArray:
-        in_strokes = eval(strokes)
-        fig, ax = plt.subplots()
+    def _create_image(self, strokes: str, idx: int) -> NpArray:
+        lines: List[List[List[float]]] = eval(strokes)
+        L = len(lines)
 
-        for x,y in in_strokes:
-            ax.plot(x, y, linewidth=12)
+        im = Image.new('RGB', (256, 256))
+        draw = ImageDraw.Draw(im)
 
-        ax.axis('off')
-        fig.canvas.draw()
-        x = np.array(fig.canvas.renderer._renderer)
-        plt.close(fig)
-        print("x", x.shape)
-        return Image.fromarray(x)
+        for i, line in enumerate(lines):
+            col = int(255 * i / L)
+            points = list(zip(line[0], line[1]))
+            draw.line(points, fill=(col, 255 - col, 0))
+
+        if SAVE_DEBUG_IMAGES:
+            im.save(f"../output/debug_images/{idx:06d}.jpg")
+        return im
 
     def __getitem__(self, index: int) -> Tuple[NpArray, NpArray]:
         """ Returns: tuple (sample, target) """
-        target = np.zeros(self.num_classes, dtype=np.float32)
-        target[self.targets[index]] = 1
-
-        sample = self._create_image(self.samples[index])
-        # print(f"getitem index={index} target={self.targets[index]} sample={sample}")
+        sample = self._create_image(self.samples[index], index)
 
         if self.transform is not None:
             sample = self.transform(sample)
 
-        return sample, target
+        return sample, self.targets[index]
 
     def __len__(self) -> int:
         return len(self.samples)
