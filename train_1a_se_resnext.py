@@ -25,7 +25,7 @@ from easydict import EasyDict as edict
 import PIL
 
 import pretrainedmodels
-from utils import cfg, create_logger, AverageMeter, F_score
+from utils import cfg, create_logger, AverageMeter, accuracy
 
 
 print(pretrainedmodels.model_names)
@@ -112,24 +112,10 @@ transform_val = transforms.Compose([
 ])
 
 
-train_dataset = DatasetFolder(DATA_INFO.ROOT_DIR, transform_train,
-                              DATA_INFO.NUM_CLASSES, conf=0.69)
-val_dataset = DatasetFolder(DATA_INFO.ROOT_DIR, transform_val,
-                            DATA_INFO.NUM_CLASSES, conf=0.69)
-
-logger.info('{} images are found for train_val'.format(len(train_dataset.samples)))
-
-train_set = [(img, target) for (img, target) in zip(train_dataset.samples, train_dataset.classes)
-         if not img[-5] in opt.TRAIN.VAL_SUFFIX]
-logger.info('{} images are used to train'.format(len(train_set)))
-val_set = [(img, target) for (img, target) in zip(train_dataset.samples, train_dataset.classes)
-           if img[-5] in opt.TRAIN.VAL_SUFFIX]
-logger.info('{} images are used to val'.format(len(val_set)))
-
-train_dataset.samples = [img for img, target in train_set]
-train_dataset.classes = [target for img, target in train_set]
-val_dataset.samples = [img for img, target in val_set]
-val_dataset.classes = [target for img, target in val_set]
+train_dataset = DatasetFolder(DATA_INFO.TRAIN_DIR, transform_train,
+                              DATA_INFO.NUM_CLASSES, val=False)
+val_dataset = DatasetFolder(DATA_INFO.VAL_DIR, transform_val,
+                            DATA_INFO.NUM_CLASSES, val=True)
 
 
 train_loader = torch.utils.data.DataLoader(
@@ -178,9 +164,11 @@ else:
 
 
 train_losses = []
-train_f2 = []
-test_losses = []
-test_f2 = []
+train_top1 = []
+train_top3 = []
+val_losses = []
+val_top1 = []
+val_top3 = []
 
 def save_checkpoint(state, filename='checkpoint.pk'):
     torch.save(state, osp.join(opt.EXPERIMENT.DIR, filename))
@@ -191,7 +179,8 @@ def train(train_loader, model, criterion, optimizer, epoch):
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
-    f2 = AverageMeter()
+    top1 = AverageMeter()
+    top3 = AverageMeter()
 
     # switch to train mode
     model.train()
@@ -211,9 +200,10 @@ def train(train_loader, model, criterion, optimizer, epoch):
         loss = criterion(output, target)
 
         # measure accuracy and record loss
-        f2_score = F_score(output.data, target)
+        prec1, prec3 = accuracy(output.data, target, (1, 3))
         losses.update(loss.data.item(), input_.size(0))
-        f2.update(f2_score.item(), input_.size(0))
+        top1.update(prec1.item(), input_.size(0))
+        top3.update(prec3.item(), input_.size(0))
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
@@ -229,17 +219,20 @@ def train(train_loader, model, criterion, optimizer, epoch):
                         'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                         'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
                         'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                        'F2 {f2.val:.3f} ({f2.avg:.3f})'.format(
+                        'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
+                        'Prec@3 {top3.val:.3f} ({top3.avg:.3f})'.format(
                         epoch, i, opt.TRAIN.STEPS_PER_EPOCH, batch_time=batch_time,
-                        data_time=data_time, loss=losses, f2=f2))
+                        data_time=data_time, loss=losses, top1=top1, top3=top3))
 
     train_losses.append(losses.avg)
-    train_f2.append(f2.avg)
+    train_top1.append(top1.avg)
+    train_top3.append(top3.avg)
 
 def validate(val_loader, model, criterion):
     batch_time = AverageMeter()
     losses = AverageMeter()
-    f2 = AverageMeter()
+    top1 = AverageMeter()
+    top3 = AverageMeter()
 
     # switch to evaluate mode
     model.eval()
@@ -257,9 +250,10 @@ def validate(val_loader, model, criterion):
             loss = criterion(output, target)
 
             # measure accuracy and record loss
-            f2_score = F_score(output.data, target)
+            prec1, prec3 = accuracy(output.data, target, (1, 3))
             losses.update(loss.data.item(), input_.size(0))
-            f2.update(f2_score.item(), input_.size(0))
+            top1.update(prec1.item(), input_.size(0))
+            top3.update(prec3.item(), input_.size(0))
 
             # measure elapsed time
             batch_time.update(time.time() - end)
@@ -269,32 +263,40 @@ def validate(val_loader, model, criterion):
                 logger.info('Test: [{0}/{1}]\t'
                             'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                             'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                            'F2 {f2.val:.3f} ({f2.avg:.3f})\t'.format(
+                            'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
+                            'Prec@3 {top3.val:.3f} ({top3.avg:.3f})'.format(
                             i, opt.VALID.STEPS_PER_EPOCH, batch_time=batch_time,
-                            loss=losses, f2=f2))
+                            loss=losses, top1=top1, top3=top3))
 
+    logger.info(' * MAP@3 {top3.avg:.3f}'.format(top1=top1))
 
-    logger.info(' * F2 {f2.avg:.3f}'.format(f2=f2))
+    val_losses.append(losses.avg)
+    val_top1.append(top1.avg)
+    val_top3.append(top3.avg)
 
-    test_losses.append(losses.avg)
-    test_f2.append(f2.avg)
+    return top3.avg
 
-    return f2.avg
+criterion = nn.CrossEntropyLoss()
 
-criterion = nn.BCEWithLogitsLoss()
-
-best_f2 = 0
+best_map3 = 0
 best_epoch = 0
+
+val_dataset.start_new_epoch()
 
 for epoch in range(last_epoch+1, opt.TRAIN.EPOCHS+1):
     logger.info('-'*50)
     lr_scheduler.step(epoch)
     logger.info('lr: {}'.format(lr_scheduler.get_lr()))
 
+    train_dataset.start_new_epoch()
+
+    logger.info('{} images are found for train'.format(len(train_dataset)))
+    logger.info('{} images are found for validation'.format(len(val_dataset)))
+
     train(train_loader, model, criterion, optimizer, epoch)
-    f2 = validate(test_loader, model, criterion)
-    is_best = f2 > best_f2
-    best_f2 = max(f2, best_f2)
+    map3 = validate(test_loader, model, criterion)
+    is_best = map3 > best_map3
+    best_map3 = max(map3, best_map3)
     if is_best:
         best_epoch = epoch
 
@@ -303,20 +305,20 @@ for epoch in range(last_epoch+1, opt.TRAIN.EPOCHS+1):
             'epoch': epoch,
             'arch': opt.MODEL.ARCH,
             'state_dict': model.module.state_dict(),
-            'best_f2': best_f2,
-            'f2': f2,
+            'best_map3': best_map3,
+            'map3': map3,
             'optimizer' : optimizer.state_dict(),
-        }, '{}_[{}]_{:.03f}.pk'.format(opt.MODEL.ARCH, epoch, f2))
+        }, '{}_[{}]_{:.03f}.pk'.format(opt.MODEL.ARCH, epoch, map3))
 
     if is_best:
         save_checkpoint({
             'epoch': epoch,
             'arch': opt.MODEL.ARCH,
             'state_dict': model.module.state_dict(),
-            'best_f2': best_f2,
-            'f2': f2,
+            'best_map3': best_map3,
+            'map3': map3,
             'optimizer' : optimizer.state_dict(),
         }, 'best_model.pk')
 
 
-logger.info('Best F2-score for single crop: {:.05f}%'.format(best_f2))
+logger.info('Best MAP@3 for single crop: {:.05f}%'.format(best_map3))

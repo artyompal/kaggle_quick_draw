@@ -10,6 +10,7 @@ from tqdm import tqdm
 
 VALIDATION_FRACTION = 30    # 1 sample out of N sample is in validation dataset
 SAMPLES_PER_EPOCH   = 10000 # number of samples per epoch per class
+VAL_SAMPLES_PER_EPOCH = 100
 
 
 def split_csv(dest_train: str, dest_val: str, csv: str) -> None:
@@ -42,5 +43,6 @@ if __name__ == "__main__":
     for csv in sorted(glob(os.path.join(sys.argv[3], "*.csv"))):
         split_csv(sys.argv[1], sys.argv[2], csv)
 
-    val = pd.concat([pd.read_csv(csv) for csv in tqdm(glob(os.path.join(sys.argv[2], "*.csv")))])
+    val = pd.concat([pd.read_csv(csv)[:VAL_SAMPLES_PER_EPOCH] for csv in
+                     tqdm(glob(os.path.join(sys.argv[2], "*.csv")))])
     val.to_csv("../data/validation.csv", index=False)

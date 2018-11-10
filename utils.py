@@ -15,7 +15,8 @@ if not osp.exists(cfg.EXPERIMENT_DIR):
 
 # Prepare the datasets ---------------------------------------------------
 cfg.DATASET = edict()
-cfg.DATASET.ROOT_DIR = osp.join(cfg.ROOT_DIR, 'data')
+cfg.DATASET.TRAIN_DIR = osp.join(cfg.ROOT_DIR, 'data/train')
+cfg.DATASET.VAL_DIR = osp.join(cfg.ROOT_DIR, 'data/val')
 cfg.DATASET.NUM_CLASSES = 340
 
 
@@ -45,7 +46,7 @@ def create_logger(filename, logger_name='logger',
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
-    def __init__(self):
+    def __init__(self) -> None:
         self.reset()
 
     def reset(self):
