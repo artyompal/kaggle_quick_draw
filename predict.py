@@ -25,6 +25,7 @@ from tqdm import tqdm
 
 import pretrainedmodels
 from utils import cfg, create_logger
+from data_loader import DatasetFolder
 
 
 model_names = sorted(name for name in models.__dict__
@@ -57,7 +58,7 @@ opt.LOG.LOG_FILE = osp.join(opt.EXPERIMENT.DIR, f'log_{opt.EXPERIMENT.TASK}.txt'
 opt.TEST = edict()
 opt.TEST.CHECKPOINT = sys.argv[2]
 opt.TEST.WORKERS = 12
-opt.TEST.BATCH_SIZE = 32
+opt.TEST.BATCH_SIZE = 96
 opt.TEST.OUTPUT = sys.argv[1]
 
 
@@ -80,8 +81,9 @@ transform_test = transforms.Compose([
                           std = [ 0.229, 0.224, 0.225 ]),
 ])
 
-test_dataset = datasets.ImageFolder(sys.argv[3], transform_test)
-logger.info('f{len(test_dataset.imgs)} images are found for test')
+test_dataset = DatasetFolder(sys.argv[3], transform_test,
+                              DATA_INFO.NUM_CLASSES, mode="test")
+logger.info(f'{len(test_dataset)} images are found for test')
 
 test_loader = torch.utils.data.DataLoader(
     test_dataset, batch_size=opt.TEST.BATCH_SIZE, shuffle=False, num_workers=opt.TEST.WORKERS)
@@ -110,7 +112,7 @@ model.module.load_state_dict(last_checkpoint['state_dict'])
 logger.info(f"Checkpoint '{opt.TEST.CHECKPOINT}' was loaded.")
 
 last_epoch = last_checkpoint['epoch']
-softmax = torch.nn.SoftMax(dim=1).cuda()
+softmax = torch.nn.Softmax(dim=1).cuda()
 
 pred_indices = []
 pred_scores = []
@@ -119,9 +121,7 @@ pred_confs = []
 model.eval()
 
 with torch.no_grad():
-    for input, target in tqdm(test_loader):
-        target = target.cuda(async=True)
-
+    for input in tqdm(test_loader):
         output = model(input)
         top_scores, top_indices = torch.topk(output, k=20)
         top_indices = top_indices.data.cpu().numpy()
@@ -139,8 +139,6 @@ pred_indices = np.concatenate(pred_indices)
 pred_scores = np.concatenate(pred_scores)
 pred_confs = np.concatenate(pred_confs)
 
-images = [osp.basename(image) for image, _ in test_dataset.imgs]
-
 np.savez(opt.TEST.OUTPUT, pred_indices=pred_indices, pred_scores=pred_scores,
-         pred_confs=pred_confs, images=images, checkpoint=opt.TEST.CHECKPOINT)
+         pred_confs=pred_confs, checkpoint=opt.TEST.CHECKPOINT)
 logger.info(f"Results were saved to {opt.TEST.OUTPUT}")
