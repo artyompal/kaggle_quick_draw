@@ -44,8 +44,8 @@ opt = edict()
 
 opt.MODEL = edict()
 opt.MODEL.PRETRAINED = True
-opt.MODEL.IMAGE_SIZE = 256
-opt.MODEL.INPUT_SIZE = 224 # crop size
+opt.MODEL.IMAGE_SIZE = 64
+opt.MODEL.INPUT_SIZE = 64 # crop size
 
 opt.EXPERIMENT = edict()
 opt.EXPERIMENT.CODENAME = 'predict'
@@ -74,15 +74,16 @@ DATA_INFO = cfg.DATASET
 
 # Data-loader of testing set
 transform_test = transforms.Compose([
-    transforms.Resize((opt.MODEL.IMAGE_SIZE)),
-    transforms.CenterCrop(opt.MODEL.INPUT_SIZE),
+#     transforms.Resize((opt.MODEL.IMAGE_SIZE)),
+#     transforms.CenterCrop(opt.MODEL.INPUT_SIZE),
     transforms.ToTensor(),
     transforms.Normalize(mean = [ 0.485, 0.456, 0.406 ],
                           std = [ 0.229, 0.224, 0.225 ]),
 ])
 
 test_dataset = DatasetFolder(sys.argv[3], transform_test,
-                              DATA_INFO.NUM_CLASSES, mode="test")
+                              DATA_INFO.NUM_CLASSES, "test",
+                              opt.MODEL.INPUT_SIZE)
 logger.info(f'{len(test_dataset)} images are found for test')
 
 test_loader = torch.utils.data.DataLoader(
@@ -99,7 +100,7 @@ model = pretrainedmodels.__dict__[opt.MODEL.ARCH](pretrained='imagenet')
 if opt.MODEL.ARCH.startswith('resnet'):
     assert(opt.MODEL.INPUT_SIZE % 32 == 0)
     model.avgpool = nn.AvgPool2d(opt.MODEL.INPUT_SIZE // 32, stride=1)
-    model.fc = nn.Linear(model.fc.in_features, DATA_INFO.NUM_CLASSES)
+    model.last_linear = nn.Linear(model.last_linear.in_features, DATA_INFO.NUM_CLASSES)
     model = torch.nn.DataParallel(model).cuda()
 else:
     assert(opt.MODEL.INPUT_SIZE % 32 == 0)
