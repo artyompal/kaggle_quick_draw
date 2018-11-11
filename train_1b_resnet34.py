@@ -40,10 +40,10 @@ timestamp = datetime.datetime.now().strftime("%y-%m-%d-%H-%M")
 opt = edict()
 
 opt.MODEL = edict()
-opt.MODEL.ARCH = 'se_resnext101_32x4d'
+opt.MODEL.ARCH = 'resnet34'
 opt.MODEL.PRETRAINED = True
-opt.MODEL.IMAGE_SIZE = 256
-opt.MODEL.INPUT_SIZE = 224 # crop size
+opt.MODEL.IMAGE_SIZE = 64
+opt.MODEL.INPUT_SIZE = 64 # crop size
 
 opt.EXPERIMENT = edict()
 opt.EXPERIMENT.CODENAME = os.path.splitext(os.path.basename(__file__))[0]
@@ -54,14 +54,14 @@ opt.LOG = edict()
 opt.LOG.LOG_FILE = osp.join(opt.EXPERIMENT.DIR, f'log_{opt.EXPERIMENT.TASK}.txt')
 
 opt.TRAIN = edict()
-opt.TRAIN.BATCH_SIZE = 36
+opt.TRAIN.BATCH_SIZE = 64
 opt.TRAIN.SHUFFLE = True
 opt.TRAIN.WORKERS = 12
 opt.TRAIN.PRINT_FREQ = 20
 opt.TRAIN.SEED = 7
-opt.TRAIN.LEARNING_RATE = 1e-5
+opt.TRAIN.LEARNING_RATE = 1e-3
 opt.TRAIN.LR_GAMMA = 0.5
-opt.TRAIN.LR_MILESTONES = [10, 20, 30]
+opt.TRAIN.LR_MILESTONES = [1, 2, 3, 4, 5, 10, 20, 30]
 opt.TRAIN.EPOCHS = 20
 opt.TRAIN.VAL_SUFFIX = '7'
 opt.TRAIN.SAVE_FREQ = 1
@@ -131,16 +131,10 @@ test_loader = torch.utils.data.DataLoader(
 logger.info(f"using pre-trained model {opt.MODEL.ARCH}")
 model = pretrainedmodels.__dict__[opt.MODEL.ARCH](pretrained='imagenet')
 
-if opt.MODEL.ARCH.startswith('resnet'):
-    assert(opt.MODEL.INPUT_SIZE % 32 == 0)
-    model.avgpool = nn.AvgPool2d(opt.MODEL.INPUT_SIZE // 32, stride=1)
-    model.fc = nn.Linear(model.fc.in_features, DATA_INFO.NUM_CLASSES)
-    model = torch.nn.DataParallel(model).cuda()
-else:
-    assert(opt.MODEL.INPUT_SIZE % 32 == 0)
-    model.avgpool = nn.AvgPool2d(opt.MODEL.INPUT_SIZE // 32, stride=1)
-    model.last_linear = nn.Linear(model.last_linear.in_features, DATA_INFO.NUM_CLASSES)
-    model = torch.nn.DataParallel(model).cuda()
+assert(opt.MODEL.INPUT_SIZE % 32 == 0)
+model.avgpool = nn.AvgPool2d(opt.MODEL.INPUT_SIZE // 32, stride=1)
+model.last_linear = nn.Linear(model.last_linear.in_features, DATA_INFO.NUM_CLASSES)
+model = torch.nn.DataParallel(model).cuda()
 
 torchsummary.summary(model, (3, opt.MODEL.INPUT_SIZE, opt.MODEL.INPUT_SIZE))
 
