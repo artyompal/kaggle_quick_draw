@@ -6,7 +6,6 @@ from typing import *
 
 import numpy as np, pandas as pd
 import torch.utils.data as data
-import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw
 from tqdm import tqdm
 
