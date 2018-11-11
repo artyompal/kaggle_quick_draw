@@ -76,7 +76,7 @@ class DatasetFolder(data.Dataset):
         if SAVE_DEBUG_IMAGES:
             im.save(f"../output/debug_images/{idx:06d}.jpg")
 
-        return im.resize((self._image_size, self._image_size), Image.LANCZOS)
+        return im.resize((self.image_size, self.image_size), Image.LANCZOS)
 
     def __getitem__(self, index: int) -> Tuple[NpArray, Optional[NpArray]]:
         """ Returns: tuple (sample, target) """

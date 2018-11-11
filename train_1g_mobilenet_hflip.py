@@ -26,21 +26,18 @@ import pprint
 from easydict import EasyDict as edict
 import PIL
 
-import pretrainedmodels
+from MobileNetV2 import MobileNetV2
 from utils import cfg, create_logger, AverageMeter, accuracy
 import torchsummary
 
 
-print(pretrainedmodels.model_names)
-
 cudnn.benchmark = True
-
 timestamp = datetime.datetime.now().strftime("%y-%m-%d-%H-%M")
 
 opt = edict()
 
 opt.MODEL = edict()
-opt.MODEL.ARCH = 'resnet34'
+opt.MODEL.ARCH = 'mobilenet'
 opt.MODEL.PRETRAINED = True
 opt.MODEL.IMAGE_SIZE = 64
 opt.MODEL.INPUT_SIZE = 64 # crop size
@@ -54,15 +51,15 @@ opt.LOG = edict()
 opt.LOG.LOG_FILE = osp.join(opt.EXPERIMENT.DIR, f'log_{opt.EXPERIMENT.TASK}.txt')
 
 opt.TRAIN = edict()
-opt.TRAIN.BATCH_SIZE = 64 * torch.cuda.device_count()
+opt.TRAIN.BATCH_SIZE = 64
 opt.TRAIN.SHUFFLE = True
 opt.TRAIN.WORKERS = 12
 opt.TRAIN.PRINT_FREQ = 20
 opt.TRAIN.SEED = 7
 opt.TRAIN.LEARNING_RATE = 1e-3
 opt.TRAIN.LR_GAMMA = 0.5
-opt.TRAIN.LR_MILESTONES = [1, 2, 3, 4, 5, 10, 20, 40, 60, 100]
-opt.TRAIN.EPOCHS = 200
+opt.TRAIN.LR_MILESTONES = [1, 2, 3, 4, 5, 10, 20, 40, 60, 80]
+opt.TRAIN.EPOCHS = 100
 opt.TRAIN.VAL_SUFFIX = '7'
 opt.TRAIN.SAVE_FREQ = 1
 opt.TRAIN.STEPS_PER_EPOCH = 7000
@@ -94,11 +91,7 @@ DATA_INFO = cfg.DATASET
 
 # Data-loader of training set
 transform_train = transforms.Compose([
-    transforms.Resize((opt.MODEL.IMAGE_SIZE)), # smaller edge
     transforms.RandomHorizontalFlip(),
-    transforms.ColorJitter(brightness=0.2, contrast=0.2),
-    transforms.RandomAffine(degrees=20, scale=(0.8, 1.2), shear=10, resample=PIL.Image.BILINEAR),
-    transforms.RandomCrop(opt.MODEL.INPUT_SIZE),
     transforms.ToTensor(),
     transforms.Normalize(mean = [ 0.485, 0.456, 0.406 ],
                           std = [ 0.229, 0.224, 0.225 ]),
@@ -106,8 +99,6 @@ transform_train = transforms.Compose([
 
 # Data-loader of testing set
 transform_val = transforms.Compose([
-    transforms.Resize((opt.MODEL.IMAGE_SIZE)),
-    transforms.CenterCrop(opt.MODEL.INPUT_SIZE),
     transforms.ToTensor(),
     transforms.Normalize(mean = [ 0.485, 0.456, 0.406 ],
                           std = [ 0.229, 0.224, 0.225 ]),
@@ -115,11 +106,11 @@ transform_val = transforms.Compose([
 
 
 train_dataset = DatasetFolder(DATA_INFO.TRAIN_DIR, transform_train,
-                              DATA_INFO.NUM_CLASSES, mode="train",
-                              image_size=opt.MODEL.IMAGE_SIZE)
+                              DATA_INFO.NUM_CLASSES, "train",
+                              opt.MODEL.IMAGE_SIZE)
 val_dataset = DatasetFolder(DATA_INFO.VAL_DIR, transform_val,
-                            DATA_INFO.NUM_CLASSES, mode="val",
-                            image_size=opt.MODEL.IMAGE_SIZE)
+                            DATA_INFO.NUM_CLASSES, "val",
+                            opt.MODEL.IMAGE_SIZE)
 
 
 train_loader = torch.utils.data.DataLoader(
@@ -130,12 +121,13 @@ test_loader = torch.utils.data.DataLoader(
 
 
 # create model
-logger.info(f"using pre-trained model {opt.MODEL.ARCH}")
-model = pretrainedmodels.__dict__[opt.MODEL.ARCH](pretrained='imagenet')
+logger.info("using pre-trained model MobileNet")
 
-assert(opt.MODEL.INPUT_SIZE % 32 == 0)
-model.avgpool = nn.AvgPool2d(opt.MODEL.INPUT_SIZE // 32, stride=1)
-model.last_linear = nn.Linear(model.last_linear.in_features, DATA_INFO.NUM_CLASSES)
+model = MobileNetV2()
+state_dict = torch.load("pretrained_weights/mobilenet_v2.pth")
+model.load_state_dict(state_dict)
+
+model.classifier = nn.Linear(model.last_channel, DATA_INFO.NUM_CLASSES)
 model = torch.nn.DataParallel(model).cuda()
 
 torchsummary.summary(model, (3, opt.MODEL.INPUT_SIZE, opt.MODEL.INPUT_SIZE))

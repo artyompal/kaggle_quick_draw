@@ -94,11 +94,7 @@ DATA_INFO = cfg.DATASET
 
 # Data-loader of training set
 transform_train = transforms.Compose([
-    transforms.Resize((opt.MODEL.IMAGE_SIZE)), # smaller edge
     transforms.RandomHorizontalFlip(),
-    transforms.ColorJitter(brightness=0.2, contrast=0.2),
-    transforms.RandomAffine(degrees=20, scale=(0.8, 1.2), shear=10, resample=PIL.Image.BILINEAR),
-    transforms.RandomCrop(opt.MODEL.INPUT_SIZE),
     transforms.ToTensor(),
     transforms.Normalize(mean = [ 0.485, 0.456, 0.406 ],
                           std = [ 0.229, 0.224, 0.225 ]),
@@ -106,8 +102,6 @@ transform_train = transforms.Compose([
 
 # Data-loader of testing set
 transform_val = transforms.Compose([
-    transforms.Resize((opt.MODEL.IMAGE_SIZE)),
-    transforms.CenterCrop(opt.MODEL.INPUT_SIZE),
     transforms.ToTensor(),
     transforms.Normalize(mean = [ 0.485, 0.456, 0.406 ],
                           std = [ 0.229, 0.224, 0.225 ]),
@@ -138,7 +132,7 @@ model.avgpool = nn.AvgPool2d(opt.MODEL.INPUT_SIZE // 32, stride=1)
 model.last_linear = nn.Linear(model.last_linear.in_features, DATA_INFO.NUM_CLASSES)
 model = torch.nn.DataParallel(model).cuda()
 
-torchsummary.summary(model, (3, opt.MODEL.INPUT_SIZE, opt.MODEL.INPUT_SIZE))
+# torchsummary.summary(model, (3, opt.MODEL.INPUT_SIZE, opt.MODEL.INPUT_SIZE))
 
 optimizer = optim.Adam(model.module.parameters(), opt.TRAIN.LEARNING_RATE)
 lr_scheduler = MultiStepLR(optimizer, opt.TRAIN.LR_MILESTONES, gamma=opt.TRAIN.LR_GAMMA, last_epoch=-1)
