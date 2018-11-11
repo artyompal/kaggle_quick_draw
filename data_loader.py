@@ -26,18 +26,22 @@ def get_file_table(root: str) -> DefaultDict[str, List[str]]:
     return res
 
 class DatasetFolder(data.Dataset):
-    def __init__(self, root: str, transform: Any, num_classes: int, val: bool) -> None:
-        self.file_table = get_file_table(root)
+    def __init__(self, root: str, transform: Any, num_classes: int, mode: str) -> None:
         self.transform = transform
         self.num_classes = num_classes
-        self.validation = val
+        self.mode = mode
         self.epoch = 0
 
-        classes = sorted(self.file_table.keys())
-        self.class2idx = {cls_: idx for idx, cls_ in enumerate(classes)}
+        if mode != "test":
+            self.file_table = get_file_table(root)
+            classes = sorted(self.file_table.keys())
+            self.class2idx = {cls_: idx for idx, cls_ in enumerate(classes)}
 
-        assert(len(self.class2idx) == num_classes)
-        assert(len(self.file_table) == num_classes)
+            assert(len(self.class2idx) == num_classes)
+            assert(len(self.file_table) == num_classes)
+        else:
+            samples = pd.read_csv(root)
+            self.samples = samples["drawing"].values
 
     def start_new_epoch(self) -> None:
         print("preparing data for a new epoch...")
@@ -45,7 +49,7 @@ class DatasetFolder(data.Dataset):
 
         for name in tqdm(self.file_table):
             files = self.file_table[name]
-            if not self.validation:
+            if self.mode == "train":
                 samples.append(pd.read_csv(files[self.epoch % len(files)]))
             else:
                 samples.append(pd.read_csv(files[0])[:MAX_VAL_SAMPLES])
@@ -72,14 +76,17 @@ class DatasetFolder(data.Dataset):
             im.save(f"../output/debug_images/{idx:06d}.jpg")
         return im
 
-    def __getitem__(self, index: int) -> Tuple[NpArray, NpArray]:
+    def __getitem__(self, index: int) -> Tuple[NpArray, Optional[NpArray]]:
         """ Returns: tuple (sample, target) """
         sample = self._create_image(self.samples[index], index)
 
         if self.transform is not None:
             sample = self.transform(sample)
 
-        return sample, self.targets[index]
+        if self.mode == "test":
+            return sample
+        else:
+            return sample, self.targets[index]
 
     def __len__(self) -> int:
         return len(self.samples)

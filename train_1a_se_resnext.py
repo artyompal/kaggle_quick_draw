@@ -5,6 +5,8 @@ import os
 import os.path as osp
 import sys
 
+from typing import *
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -56,10 +58,10 @@ opt.TRAIN.SHUFFLE = True
 opt.TRAIN.WORKERS = 12
 opt.TRAIN.PRINT_FREQ = 20
 opt.TRAIN.SEED = 7
-opt.TRAIN.LEARNING_RATE = 1e-4
+opt.TRAIN.LEARNING_RATE = 1e-5
 opt.TRAIN.LR_GAMMA = 0.5
-opt.TRAIN.LR_MILESTONES = [4, 6, 8, 10, 12, 14]
-opt.TRAIN.EPOCHS = 15
+opt.TRAIN.LR_MILESTONES = [10, 20, 30]
+opt.TRAIN.EPOCHS = 20
 opt.TRAIN.VAL_SUFFIX = '7'
 opt.TRAIN.SAVE_FREQ = 1
 opt.TRAIN.STEPS_PER_EPOCH = 7000
@@ -112,9 +114,9 @@ transform_val = transforms.Compose([
 
 
 train_dataset = DatasetFolder(DATA_INFO.TRAIN_DIR, transform_train,
-                              DATA_INFO.NUM_CLASSES, val=False)
+                              DATA_INFO.NUM_CLASSES, mode="train")
 val_dataset = DatasetFolder(DATA_INFO.VAL_DIR, transform_val,
-                            DATA_INFO.NUM_CLASSES, val=True)
+                            DATA_INFO.NUM_CLASSES, mode="val")
 
 
 train_loader = torch.utils.data.DataLoader(
@@ -162,14 +164,14 @@ else:
     logger.info(f"Training will be resumed from epoch {last_checkpoint['epoch']}")
 
 
-train_losses = []
-train_top1 = []
-train_top3 = []
-val_losses = []
-val_top1 = []
-val_top3 = []
+train_losses: List[float] = []
+train_top1: List[float] = []
+train_top3: List[float] = []
+val_losses: List[float] = []
+val_top1: List[float] = []
+val_top3: List[float] = []
 
-def save_checkpoint(state, filename='checkpoint.pk'):
+def save_checkpoint(state: Dict[str, Any], filename: str) -> None:
     torch.save(state, osp.join(opt.EXPERIMENT.DIR, filename))
     logger.info(f'A snapshot was saved to {filename}')
 
@@ -268,21 +270,22 @@ def validate(val_loader, model, criterion):
 
     return top3.avg
 
+
 criterion = nn.CrossEntropyLoss()
 
 best_map3 = 0
 best_epoch = 0
 
 val_dataset.start_new_epoch()
-logger.info('{} images are found for validation'.format(len(val_dataset)))
+logger.info(f'{len(val_dataset)} images are found for validation')
 
 for epoch in range(last_epoch+1, opt.TRAIN.EPOCHS+1):
     logger.info('-'*50)
     lr_scheduler.step(epoch)
-    logger.info('lr: {}'.format(lr_scheduler.get_lr()))
+    logger.info(f'lr: {lr_scheduler.get_lr()}')
 
     train_dataset.start_new_epoch()
-    logger.info('{} images are found for train'.format(len(train_dataset)))
+    logger.info(f'{len(train_dataset)} images are found for train')
 
     train(train_loader, model, criterion, optimizer, epoch)
     map3 = validate(test_loader, model, criterion)
@@ -291,25 +294,19 @@ for epoch in range(last_epoch+1, opt.TRAIN.EPOCHS+1):
     if is_best:
         best_epoch = epoch
 
+    data_to_save = {
+        'epoch': epoch,
+        'arch': opt.MODEL.ARCH,
+        'state_dict': model.module.state_dict(),
+        'best_map3': best_map3,
+        'map3': map3,
+        'optimizer' : optimizer.state_dict(),
+    }
+
     if epoch % opt.TRAIN.SAVE_FREQ == 0:
-        save_checkpoint({
-            'epoch': epoch,
-            'arch': opt.MODEL.ARCH,
-            'state_dict': model.module.state_dict(),
-            'best_map3': best_map3,
-            'map3': map3,
-            'optimizer' : optimizer.state_dict(),
-        }, '{}_[{}]_{:.03f}.pk'.format(opt.MODEL.ARCH, epoch, map3))
+        save_checkpoint(data_to_save, f'{opt.EXPERIMENT.CODENAME}_[{epoch}]_{map3:.03f}.pk')
 
     if is_best:
-        save_checkpoint({
-            'epoch': epoch,
-            'arch': opt.MODEL.ARCH,
-            'state_dict': model.module.state_dict(),
-            'best_map3': best_map3,
-            'map3': map3,
-            'optimizer' : optimizer.state_dict(),
-        }, 'best_model.pk')
+        save_checkpoint(data_to_save, f'{opt.EXPERIMENT.CODENAME}_best_model.pk')
 
-
-logger.info('Best MAP@3 for single crop: {:.05f}%'.format(best_map3))
+logger.info(f'Best MAP@3 for single crop: {best_map3:.05f}')
