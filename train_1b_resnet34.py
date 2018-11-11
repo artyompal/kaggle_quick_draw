@@ -61,8 +61,8 @@ opt.TRAIN.PRINT_FREQ = 20
 opt.TRAIN.SEED = 7
 opt.TRAIN.LEARNING_RATE = 1e-3
 opt.TRAIN.LR_GAMMA = 0.5
-opt.TRAIN.LR_MILESTONES = [1, 2, 3, 4, 5, 10, 20, 30]
-opt.TRAIN.EPOCHS = 20
+opt.TRAIN.LR_MILESTONES = [1, 2, 3, 4, 5, 10, 20, 40, 60, 80]
+opt.TRAIN.EPOCHS = 100
 opt.TRAIN.VAL_SUFFIX = '7'
 opt.TRAIN.SAVE_FREQ = 1
 opt.TRAIN.STEPS_PER_EPOCH = 7000
@@ -115,9 +115,11 @@ transform_val = transforms.Compose([
 
 
 train_dataset = DatasetFolder(DATA_INFO.TRAIN_DIR, transform_train,
-                              DATA_INFO.NUM_CLASSES, mode="train")
+                              DATA_INFO.NUM_CLASSES, mode="train",
+                              opt.MODEL.IMAGE_SIZE)
 val_dataset = DatasetFolder(DATA_INFO.VAL_DIR, transform_val,
-                            DATA_INFO.NUM_CLASSES, mode="val")
+                            DATA_INFO.NUM_CLASSES, mode="val",
+                            opt.MODEL.IMAGE_SIZE)
 
 
 train_loader = torch.utils.data.DataLoader(

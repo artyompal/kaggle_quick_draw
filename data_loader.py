@@ -25,11 +25,13 @@ def get_file_table(root: str) -> DefaultDict[str, List[str]]:
     return res
 
 class DatasetFolder(data.Dataset):
-    def __init__(self, root: str, transform: Any, num_classes: int, mode: str) -> None:
+    def __init__(self, root: str, transform: Any, num_classes: int, mode: str,
+                 image_size: int) -> None:
         self.transform = transform
         self.num_classes = num_classes
         self.mode = mode
         self.epoch = 0
+        self.image_size = image_size
 
         if mode != "test":
             self.file_table = get_file_table(root)
@@ -73,7 +75,8 @@ class DatasetFolder(data.Dataset):
 
         if SAVE_DEBUG_IMAGES:
             im.save(f"../output/debug_images/{idx:06d}.jpg")
-        return im
+
+        return im.resize((self._image_size, self._image_size), Image.LANCZOS)
 
     def __getitem__(self, index: int) -> Tuple[NpArray, Optional[NpArray]]:
         """ Returns: tuple (sample, target) """
