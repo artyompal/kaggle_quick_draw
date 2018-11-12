@@ -59,7 +59,7 @@ opt.TRAIN.SEED = 7
 opt.TRAIN.LEARNING_RATE = 1e-3
 opt.TRAIN.LR_GAMMA = 0.5
 opt.TRAIN.LR_MILESTONES = [1, 2, 3, 4, 5, 10, 20, 40, 60, 80]
-opt.TRAIN.EPOCHS = 100
+opt.TRAIN.EPOCHS = 300
 opt.TRAIN.VAL_SUFFIX = '7'
 opt.TRAIN.SAVE_FREQ = 1
 opt.TRAIN.STEPS_PER_EPOCH = 7000
@@ -112,10 +112,10 @@ transform_val = transforms.Compose([
 
 
 train_dataset = DatasetFolder(DATA_INFO.TRAIN_DIR, transform_train,
-                              DATA_INFO.NUM_CLASSES, mode="train",
+                              DATA_INFO.NUM_CLASSES, "train",
                               opt.MODEL.IMAGE_SIZE)
 val_dataset = DatasetFolder(DATA_INFO.VAL_DIR, transform_val,
-                            DATA_INFO.NUM_CLASSES, mode="val",
+                            DATA_INFO.NUM_CLASSES, "val",
                             opt.MODEL.IMAGE_SIZE)
 
 

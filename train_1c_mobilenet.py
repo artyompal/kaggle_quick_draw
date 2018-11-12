@@ -112,9 +112,11 @@ transform_val = transforms.Compose([
 
 
 train_dataset = DatasetFolder(DATA_INFO.TRAIN_DIR, transform_train,
-                              DATA_INFO.NUM_CLASSES, mode="train")
+                              DATA_INFO.NUM_CLASSES, "train",
+                              opt.MODEL.IMAGE_SIZE)
 val_dataset = DatasetFolder(DATA_INFO.VAL_DIR, transform_val,
-                            DATA_INFO.NUM_CLASSES, mode="val")
+                            DATA_INFO.NUM_CLASSES, "val",
+                            opt.MODEL.IMAGE_SIZE)
 
 
 train_loader = torch.utils.data.DataLoader(
