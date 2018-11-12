@@ -40,6 +40,7 @@ if __name__ == "__main__":
         print(f"usage: {sys.argv[0]} <dest_train_dir> <dest_val_dir> <source_data_dir>")
         sys.exit()
 
+    np.random.seed(0)
     for csv in sorted(glob(os.path.join(sys.argv[3], "*.csv"))):
         split_csv(sys.argv[1], sys.argv[2], csv)
 
