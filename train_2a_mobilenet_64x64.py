@@ -114,10 +114,10 @@ val_dataset = DatasetFolder(DATA_INFO.VAL_DIR, transform_val,
 
 
 train_loader = torch.utils.data.DataLoader(
-    train_dataset, batch_size=opt.TRAIN.BATCH_SIZE, shuffle=opt.TRAIN.SHUFFLE, num_workers=1) #opt.TRAIN.WORKERS)
+    train_dataset, batch_size=opt.TRAIN.BATCH_SIZE, shuffle=opt.TRAIN.SHUFFLE, num_workers=opt.TRAIN.WORKERS)
 
 test_loader = torch.utils.data.DataLoader(
-    val_dataset, batch_size=opt.TRAIN.BATCH_SIZE, shuffle=False, num_workers=1) #opt.TRAIN.WORKERS)
+    val_dataset, batch_size=opt.TRAIN.BATCH_SIZE, shuffle=False, num_workers=opt.TRAIN.WORKERS)
 
 
 # create model

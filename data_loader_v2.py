@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 
 NpArray = Any
 
-SAVE_DEBUG_IMAGES = True
+SAVE_DEBUG_IMAGES = False
+DEBUG_SHOW = False
 MAX_VAL_SAMPLES = 200
 
 def get_file_table(root: str) -> DefaultDict[str, List[str]]:
@@ -105,19 +106,19 @@ class DatasetFolder(data.Dataset):
                 y = (stroke[1][i] - min_y) * max_dim // range_y
                 local_t = (stroke[2][i] - min_local_t) * 200 // time_range + 55
 
-                assert(x < self.image_size)
-                assert(y < self.image_size)
-                assert(stroke_num < 256)
-                assert(local_t < 256)
-                draw.line([prev_x, prev_y, x, y], width=2, fill=(stroke_num, local_t, 128))
+                # assert(x < self.image_size)
+                # assert(y < self.image_size)
+                # assert(stroke_num < 256)
+                # assert(local_t < 256)
 
+                draw.line([prev_x, prev_y, x, y], width=2, fill=(stroke_num, local_t, 128))
                 prev_x, prev_y = x, y
 
         if SAVE_DEBUG_IMAGES:
             im.save(f"../output/debug_images_v2/{idx:06d}.jpg")
-
-        plt.imshow(im)
-        plt.show()
+        if DEBUG_SHOW:
+            plt.imshow(im)
+            plt.show()
 
         return im
 
