@@ -67,20 +67,22 @@ class DatasetFolder(data.Dataset):
         print("done")
 
     def _create_image(self, strokes: str, idx: int) -> NpArray:
-        lines: List[List[List[float]]] = json.loads(strokes)
-        L = len(lines)
+        strokes: List[List[List[float]]] = json.loads(strokes)
+        L = len(strokes)
 
         im = Image.new('RGB', (256, 256))
         draw = ImageDraw.Draw(im)
 
-        for i, line in enumerate(lines):
+        for i, stroke in enumerate(strokes):
             stroke_num = 255 * i // L
-            start_time, end_time = min(line[2]), max(line[2])
+            start_time, end_time = min(stroke[2]), max(stroke[2])
             time_range = end_time - start_time
+            time_range = max(1, time_range)
 
-            for i in range(1, len(line)):
-                time_code = (line[2][i] - start_time) * 255 // time_range
-                draw.line([line[0][i-1], line[1][i-1], line[0][i], line[1][i]],
+            for i in range(1, len(stroke[0])):
+                # print("stroke", len(stroke[0]), len(stroke[1]), len(stroke[2]))
+                time_code = (stroke[2][i] - start_time) * 255 // time_range
+                draw.line([stroke[0][i-1], stroke[1][i-1], stroke[0][i], stroke[1][i]],
                           width=2, fill=(stroke_num, time_code, 128))
 
         if SAVE_DEBUG_IMAGES:
