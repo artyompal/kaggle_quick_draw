@@ -109,11 +109,11 @@ transform_val = transforms.Compose([
 
 
 train_dataset = DatasetFolder(DATA_INFO.TRAIN_DIR, transform_train,
-                              DATA_INFO.NUM_CLASSES, mode="train",
-                              image_size=opt.MODEL.IMAGE_SIZE)
+                              DATA_INFO.NUM_CLASSES, "train",
+                              opt.MODEL.IMAGE_SIZE)
 val_dataset = DatasetFolder(DATA_INFO.VAL_DIR, transform_val,
-                            DATA_INFO.NUM_CLASSES, mode="val",
-                            image_size=opt.MODEL.IMAGE_SIZE)
+                            DATA_INFO.NUM_CLASSES, "val",
+                            opt.MODEL.IMAGE_SIZE)
 
 
 train_loader = torch.utils.data.DataLoader(
@@ -132,7 +132,7 @@ model.avgpool = nn.AvgPool2d(opt.MODEL.INPUT_SIZE // 32, stride=1)
 model.last_linear = nn.Linear(model.last_linear.in_features, DATA_INFO.NUM_CLASSES)
 model = torch.nn.DataParallel(model).cuda()
 
-# torchsummary.summary(model, (3, opt.MODEL.INPUT_SIZE, opt.MODEL.INPUT_SIZE))
+torchsummary.summary(model, (3, opt.MODEL.INPUT_SIZE, opt.MODEL.INPUT_SIZE))
 
 optimizer = optim.Adam(model.module.parameters(), opt.TRAIN.LEARNING_RATE)
 lr_scheduler = MultiStepLR(optimizer, opt.TRAIN.LR_MILESTONES, gamma=opt.TRAIN.LR_GAMMA, last_epoch=-1)

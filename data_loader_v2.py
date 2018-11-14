@@ -36,6 +36,9 @@ class DatasetFolder(data.Dataset):
         self.epoch = 0
         self.image_size = image_size
 
+        countries = pd.read_csv("../data/countries.csv")
+        self.country_data = {s[1]: int(255 * (s[5] / 360 + 0.5)) for _, s in countries.iterrows()}
+
         if mode != "test":
             self.file_table = get_file_table(root)
             classes = sorted(self.file_table.keys())
@@ -65,12 +68,15 @@ class DatasetFolder(data.Dataset):
         samples_df = pd.concat(samples)
         self.samples = samples_df["drawing"].values
         self.targets = [self.class2idx[c] for c in samples_df["word"].values]
+        self.countries = samples_df["countrycode"].values
         self.epoch += 1
         print("done")
 
-    def _create_image(self, strokes_str: str, idx: int) -> NpArray:
+    def _create_image(self, strokes_str: str, idx: int, country: str) -> NpArray:
         strokes: List[List[List[float]]] = json.loads(strokes_str)
         L = len(strokes)
+
+        country_code = self.country_data[country] if country in self.country_data else 0
 
         im = Image.new('RGB', (self.image_size, self.image_size))
         draw = ImageDraw.Draw(im)
@@ -111,7 +117,8 @@ class DatasetFolder(data.Dataset):
                 # assert(stroke_num < 256)
                 # assert(local_t < 256)
 
-                draw.line([prev_x, prev_y, x, y], width=2, fill=(stroke_num, local_t, 128))
+                draw.line([prev_x, prev_y, x, y], width=2,
+                          fill=(stroke_num, local_t, country_code))
                 prev_x, prev_y = x, y
 
         if SAVE_DEBUG_IMAGES:
@@ -124,7 +131,7 @@ class DatasetFolder(data.Dataset):
 
     def __getitem__(self, index: int) -> Tuple[NpArray, Optional[NpArray]]:
         """ Returns: tuple (sample, target) """
-        sample = self._create_image(self.samples[index], index)
+        sample = self._create_image(self.samples[index], index, self.countries[index])
 
         if self.transform is not None:
             sample = self.transform(sample)
