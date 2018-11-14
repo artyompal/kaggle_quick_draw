@@ -9,6 +9,7 @@ import numpy as np, pandas as pd
 import torch.utils.data as data
 from PIL import Image, ImageDraw
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 NpArray = Any
 
@@ -66,29 +67,59 @@ class DatasetFolder(data.Dataset):
         self.epoch += 1
         print("done")
 
-    def _create_image(self, strokes: str, idx: int) -> NpArray:
-        strokes: List[List[List[float]]] = json.loads(strokes)
+    def _create_image(self, strokes_str: str, idx: int) -> NpArray:
+        strokes: List[List[List[float]]] = json.loads(strokes_str)
         L = len(strokes)
 
-        im = Image.new('RGB', (256, 256))
+        im = Image.new('RGB', (self.image_size, self.image_size))
         draw = ImageDraw.Draw(im)
 
+        min_x = min_y = min_t = +100500.0
+        max_x = max_y = max_t = -100500.0
+        max_dim = self.image_size - 1
+
+        for stroke in strokes:
+            min_x = min(min_x, min(stroke[0]))
+            min_y = min(min_y, min(stroke[1]))
+            # min_t = min(min_t, min(stroke[2]))
+
+            max_x = max(max_x, max(stroke[0]))
+            max_y = max(max_y, max(stroke[1]))
+            # max_t = max(max_t, max(stroke[2]))
+
+        range_x = max(1, max_x - min_x)
+        range_y = max(1, max_y - min_y)
+        # range_t = max(1, max_t - min_t)
+
         for i, stroke in enumerate(strokes):
-            stroke_num = 255 * i // L
-            start_time, end_time = min(stroke[2]), max(stroke[2])
-            time_range = end_time - start_time
+            stroke_num = 200 * i // L + 55
+            min_local_t, max_local_t = min(stroke[2]), max(stroke[2])
+            time_range = max_local_t - min_local_t
             time_range = max(1, time_range)
 
+            prev_x = (stroke[0][0] - min_x) * max_dim // range_x
+            prev_y = (stroke[1][0] - min_y) * max_dim // range_y
+
             for i in range(1, len(stroke[0])):
-                # print("stroke", len(stroke[0]), len(stroke[1]), len(stroke[2]))
-                time_code = (stroke[2][i] - start_time) * 255 // time_range
-                draw.line([stroke[0][i-1], stroke[1][i-1], stroke[0][i], stroke[1][i]],
-                          width=2, fill=(stroke_num, time_code, 128))
+                x = (stroke[0][i] - min_x) * max_dim // range_x
+                y = (stroke[1][i] - min_y) * max_dim // range_y
+                local_t = (stroke[2][i] - min_local_t) * 200 // time_range + 55
+
+                assert(x < self.image_size)
+                assert(y < self.image_size)
+                assert(stroke_num < 256)
+                assert(local_t < 256)
+                draw.line([prev_x, prev_y, x, y], width=2, fill=(stroke_num, local_t, 128))
+
+                prev_x, prev_y = x, y
 
         if SAVE_DEBUG_IMAGES:
             im.save(f"../output/debug_images_v2/{idx:06d}.jpg")
 
-        return im.resize((self.image_size, self.image_size), Image.LANCZOS)
+        plt.imshow(im)
+        plt.show()
+
+        return im
 
     def __getitem__(self, index: int) -> Tuple[NpArray, Optional[NpArray]]:
         """ Returns: tuple (sample, target) """

@@ -10,7 +10,7 @@ import numpy as np, pandas as pd
 from tqdm import tqdm
 
 VALIDATION_FRACTION = 30    # 1 sample out of N sample is in validation dataset
-SAMPLES_PER_EPOCH   = 10000 # number of samples per epoch per class
+SAMPLES_PER_EPOCH   = 2000  # number of samples per epoch per class
 VAL_SAMPLES_PER_EPOCH = 100
 SEED = 7
 
