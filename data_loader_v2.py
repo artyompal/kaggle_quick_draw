@@ -50,20 +50,29 @@ class DatasetFolder(data.Dataset):
             samples = pd.read_csv(root)
             self.samples = samples["drawing"].values
 
-    def _load_csv(self, name: str) -> Any:
-        files = self.file_table[name]
-        if self.mode == "train":
-            return pd.read_csv(files[self.epoch % len(files)])
-        else:
-            return pd.read_csv(files[0])[:MAX_VAL_SAMPLES]
+#     def _load_csv(self, name: str) -> Any:
+#         files = self.file_table[name]
+#         if self.mode == "train":
+#             return pd.read_csv(files[self.epoch % len(files)])
+#         else:
+#             return pd.read_csv(files[0])[:MAX_VAL_SAMPLES]
 
     def start_new_epoch(self) -> None:
         print("preparing data for a new epoch...")
-        load_func = partial(DatasetFolder._load_csv, self)
-        pool = multiprocessing.Pool()
-        samples = list(tqdm(pool.imap(load_func, self.file_table), total=len(self.file_table)))
-        pool.close()
-        pool.terminate()
+        samples = []
+
+#         load_func = partial(DatasetFolder._load_csv, self)
+#         pool = multiprocessing.Pool()
+#         samples = list(tqdm(pool.imap(load_func, self.file_table), total=len(self.file_table)))
+#         pool.close()
+#         pool.terminate()
+
+        for name in tqdm(self.file_table):
+            files = self.file_table[name]
+            if self.mode == "train":
+                samples.append(pd.read_csv(files[self.epoch % len(files)]))
+            else:
+                samples.append(pd.read_csv(files[0])[:MAX_VAL_SAMPLES])
 
         samples_df = pd.concat(samples)
         self.samples = samples_df["drawing"].values
