@@ -56,9 +56,9 @@ opt.TRAIN.SHUFFLE = True
 opt.TRAIN.WORKERS = 12
 opt.TRAIN.PRINT_FREQ = 20
 opt.TRAIN.SEED = 7
-opt.TRAIN.LEARNING_RATE = 1e-3
-opt.TRAIN.LR_GAMMA = 0.5
-opt.TRAIN.LR_MILESTONES = [1, 2, 3, 4, 5, 10, 20, 40, 60, 80]
+opt.TRAIN.LEARNING_RATE = 1e-2
+# opt.TRAIN.LR_GAMMA = 0.5
+# opt.TRAIN.LR_MILESTONES = [1, 2, 3, 4, 5, 10, 20, 40, 60, 100]
 opt.TRAIN.EPOCHS = 300
 opt.TRAIN.VAL_SUFFIX = '7'
 opt.TRAIN.SAVE_FREQ = 1
@@ -133,7 +133,8 @@ model = torch.nn.DataParallel(model).cuda()
 torchsummary.summary(model, (3, opt.MODEL.INPUT_SIZE, opt.MODEL.INPUT_SIZE))
 
 optimizer = optim.Adam(model.module.parameters(), opt.TRAIN.LEARNING_RATE)
-lr_scheduler = MultiStepLR(optimizer, opt.TRAIN.LR_MILESTONES, gamma=opt.TRAIN.LR_GAMMA, last_epoch=-1)
+# lr_scheduler = MultiStepLR(optimizer, opt.TRAIN.LR_MILESTONES, gamma=opt.TRAIN.LR_GAMMA, last_epoch=-1)
+lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, 50, 1e-7)
 
 if opt.TRAIN.RESUME is None:
     last_epoch = 0
