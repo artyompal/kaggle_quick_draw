@@ -39,11 +39,11 @@ if __name__ == "__main__":
     print(confidences)
 
     # get list of classes
-    classes = [os.path.basename(f) for f in glob("../data/train_simplified/*.csv")]
+    classes = [os.path.basename(f) for f in glob("../data/train_raw/*.csv")]
     classes = sorted([s[:-4].replace(' ', '_') for s in classes])
 
     # get list of test samples
-    test_samples = pd.read_csv("../data/test_simplified.csv")["key_id"].values
+    test_samples = pd.read_csv("../data/test_raw.csv")["key_id"].values
 
     # get predictions
     predicts = []
