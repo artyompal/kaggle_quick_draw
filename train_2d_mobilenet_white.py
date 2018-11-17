@@ -50,7 +50,7 @@ opt.LOG = edict()
 opt.LOG.LOG_FILE = osp.join(opt.EXPERIMENT.DIR, f'log_{opt.EXPERIMENT.TASK}.txt')
 
 opt.TRAIN = edict()
-opt.TRAIN.BATCH_SIZE = 64
+opt.TRAIN.BATCH_SIZE = 1536
 opt.TRAIN.SHUFFLE = True
 opt.TRAIN.WORKERS = 12
 opt.TRAIN.PRINT_FREQ = 20
@@ -127,7 +127,8 @@ model.load_state_dict(state_dict)
 model.classifier = nn.Linear(model.last_channel, DATA_INFO.NUM_CLASSES)
 model = torch.nn.DataParallel(model).cuda()
 
-torchsummary.summary(model, (3, opt.MODEL.INPUT_SIZE, opt.MODEL.INPUT_SIZE))
+if torch.cuda.device_count() == 1:
+    torchsummary.summary(model, (3, opt.MODEL.INPUT_SIZE, opt.MODEL.INPUT_SIZE))
 
 optimizer = optim.Adam(model.module.parameters(), opt.TRAIN.LEARNING_RATE)
 lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="max",
@@ -141,7 +142,7 @@ else:
     last_checkpoint = torch.load(opt.TRAIN.RESUME)
     assert(last_checkpoint['arch']==opt.MODEL.ARCH)
     model.module.load_state_dict(last_checkpoint['state_dict'])
-    optimizer.load_state_dict(last_checkpoint['optimizer'])
+    # optimizer.load_state_dict(last_checkpoint['optimizer'])
     logger.info(f"Checkpoint {opt.TRAIN.RESUME} was loaded.")
 
     last_epoch = last_checkpoint['epoch']
@@ -254,6 +255,10 @@ def validate(val_loader, model, criterion):
 
     return top3.avg
 
+def read_lr() -> float:
+    for i, param_group in enumerate(optimizer.param_groups):
+       lr = float(param_group['lr'])
+       logger.info(f"learning rate: {lr}")
 
 criterion = nn.CrossEntropyLoss()
 
@@ -267,6 +272,7 @@ for epoch in range(last_epoch+1, opt.TRAIN.EPOCHS+1):
     logger.info('-'*50)
     train_dataset.start_new_epoch()
     logger.info(f'{len(train_dataset)} images are found for train')
+    read_lr()
 
     train(train_loader, model, criterion, optimizer, epoch)
     map3 = validate(test_loader, model, criterion)
