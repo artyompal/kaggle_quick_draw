@@ -10,7 +10,7 @@ from typing import *
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.optim.lr_scheduler import MultiStepLR
+# from torch.optim.lr_scheduler import MultiStepLR
 import torch.backends.cudnn as cudnn
 
 import torchvision.transforms as transforms
@@ -59,10 +59,10 @@ opt.TRAIN.SHUFFLE = True
 opt.TRAIN.WORKERS = 12
 opt.TRAIN.PRINT_FREQ = 20
 opt.TRAIN.SEED = 7
-opt.TRAIN.LEARNING_RATE = 1e-2
+opt.TRAIN.LEARNING_RATE = 1e-5
 # opt.TRAIN.LR_GAMMA = 0.5
 # opt.TRAIN.LR_MILESTONES = [1, 2, 3, 4, 5, 10, 20, 40, 60, 100]
-opt.TRAIN.EPOCHS = 300
+opt.TRAIN.EPOCHS = 1000
 opt.TRAIN.VAL_SUFFIX = '7'
 opt.TRAIN.SAVE_FREQ = 1
 opt.TRAIN.STEPS_PER_EPOCH = 7000
@@ -136,7 +136,7 @@ torchsummary.summary(model, (3, opt.MODEL.INPUT_SIZE, opt.MODEL.INPUT_SIZE))
 
 optimizer = optim.Adam(model.module.parameters(), opt.TRAIN.LEARNING_RATE)
 # lr_scheduler = MultiStepLR(optimizer, opt.TRAIN.LR_MILESTONES, gamma=opt.TRAIN.LR_GAMMA, last_epoch=-1)
-lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, 50, 1e-7)
+# lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, 50, 1e-7)
 
 if opt.TRAIN.RESUME is None:
     last_epoch = 0
@@ -270,8 +270,8 @@ logger.info(f'{len(val_dataset)} images are found for validation')
 
 for epoch in range(last_epoch+1, opt.TRAIN.EPOCHS+1):
     logger.info('-'*50)
-    lr_scheduler.step(epoch)
-    logger.info(f'lr: {lr_scheduler.get_lr()}')
+#     lr_scheduler.step(epoch)
+#     logger.info(f'lr: {lr_scheduler.get_lr()}')
 
     train_dataset.start_new_epoch()
     logger.info(f'{len(train_dataset)} images are found for train')
