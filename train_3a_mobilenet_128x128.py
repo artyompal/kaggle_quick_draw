@@ -10,13 +10,12 @@ from typing import *
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.optim.lr_scheduler import MultiStepLR
 import torch.backends.cudnn as cudnn
 
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models as models
-from data_loader import DatasetFolder
+from data_loader_v2 import DatasetFolder
 import logging
 import numpy as np
 import random
@@ -56,10 +55,8 @@ opt.TRAIN.SHUFFLE = True
 opt.TRAIN.WORKERS = 12
 opt.TRAIN.PRINT_FREQ = 20
 opt.TRAIN.SEED = 7
-opt.TRAIN.LEARNING_RATE = 1e-3
-opt.TRAIN.LR_GAMMA = 0.5
-opt.TRAIN.LR_MILESTONES = [1, 2, 3, 4, 5, 10, 20, 40, 60, 80]
-opt.TRAIN.EPOCHS = 300
+opt.TRAIN.LEARNING_RATE = 1e-2
+opt.TRAIN.EPOCHS = 1000
 opt.TRAIN.VAL_SUFFIX = '7'
 opt.TRAIN.SAVE_FREQ = 1
 opt.TRAIN.STEPS_PER_EPOCH = 7000
@@ -130,10 +127,12 @@ model.load_state_dict(state_dict)
 model.classifier = nn.Linear(model.last_channel, DATA_INFO.NUM_CLASSES)
 model = torch.nn.DataParallel(model).cuda()
 
-torchsummary.summary(model, (3, opt.MODEL.INPUT_SIZE, opt.MODEL.INPUT_SIZE))
+if torch.cuda.device_count() == 1:
+    torchsummary.summary(model, (3, opt.MODEL.INPUT_SIZE, opt.MODEL.INPUT_SIZE))
 
 optimizer = optim.Adam(model.module.parameters(), opt.TRAIN.LEARNING_RATE)
-lr_scheduler = MultiStepLR(optimizer, opt.TRAIN.LR_MILESTONES, gamma=opt.TRAIN.LR_GAMMA, last_epoch=-1)
+lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="max",
+                   patience=3, verbose=True, min_lr=1e-8)
 
 if opt.TRAIN.RESUME is None:
     last_epoch = 0
@@ -172,6 +171,9 @@ def train(train_loader, model, criterion, optimizer, epoch):
     # switch to train mode
     model.train()
 
+    print("total batches:", len(train_loader))
+    num_steps = min(len(train_loader), opt.TRAIN.STEPS_PER_EPOCH)
+
     end = time.time()
     for i, (input_, target) in enumerate(train_loader):
         if i >= opt.TRAIN.STEPS_PER_EPOCH:
@@ -202,7 +204,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
         end = time.time()
 
         if i % opt.TRAIN.PRINT_FREQ == 0:
-            logger.info(f'{epoch} [{i}/{opt.TRAIN.STEPS_PER_EPOCH}]\t'
+            logger.info(f'{epoch} [{i}/{num_steps}]\t'
                         f'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                         f'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
                         f'Loss {losses.val:.4f} ({losses.avg:.4f})\t'
@@ -256,8 +258,19 @@ def validate(val_loader, model, criterion):
 
     return top3.avg
 
+def set_lr(lr: float) -> None:
+    for param_group in optimizer.param_groups:
+       param_group['lr'] = lr
+
+def read_lr() -> None:
+    for param_group in optimizer.param_groups:
+       lr = float(param_group['lr'])
+       logger.info(f"learning rate: {lr}")
+       return
+
 
 criterion = nn.CrossEntropyLoss()
+set_lr(opt.TRAIN.LEARNING_RATE)
 
 best_map3 = 0
 best_epoch = 0
@@ -267,14 +280,14 @@ logger.info(f'{len(val_dataset)} images are found for validation')
 
 for epoch in range(last_epoch+1, opt.TRAIN.EPOCHS+1):
     logger.info('-'*50)
-    lr_scheduler.step(epoch)
-    logger.info(f'lr: {lr_scheduler.get_lr()}')
-
     train_dataset.start_new_epoch()
     logger.info(f'{len(train_dataset)} images are found for train')
+    read_lr()
 
     train(train_loader, model, criterion, optimizer, epoch)
     map3 = validate(test_loader, model, criterion)
+    lr_scheduler.step(map3)
+
     is_best = map3 > best_map3
     best_map3 = max(map3, best_map3)
     if is_best:
@@ -293,6 +306,6 @@ for epoch in range(last_epoch+1, opt.TRAIN.EPOCHS+1):
         save_checkpoint(data_to_save, f'{opt.EXPERIMENT.CODENAME}_[{epoch}]_{map3:.03f}.pk')
 
     if is_best:
-        save_checkpoint(data_to_save, f'{opt.EXPERIMENT.CODENAME}_best_model.pk')
+        save_checkpoint(data_to_save, f'{opt.EXPERIMENT.CODENAME}_best_[{epoch}]_{map3:.03f}.pk')
 
 logger.info(f'Best MAP@3 for single crop: {best_map3:.05f}')

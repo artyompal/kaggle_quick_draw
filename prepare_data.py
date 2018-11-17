@@ -49,6 +49,7 @@ if __name__ == "__main__":
     file_list = glob(os.path.join(sys.argv[3], "*.csv"))
     print(len(list(tqdm(pool.imap_unordered(split_func, file_list), total=len(file_list)))))
 
-    val = pd.concat([pd.read_csv(csv)[:VAL_SAMPLES_PER_EPOCH] for csv in
-                     tqdm(glob(os.path.join(sys.argv[2], "*.csv")))])
-    val.to_csv("../data/validation.csv", index=False)
+#     val = pd.concat([pd.read_csv(csv)[:VAL_SAMPLES_PER_EPOCH] for csv in
+#                      tqdm(glob(os.path.join(sys.argv[2], "*.csv")))])
+#     val.to_csv("../data/validation.csv", index=False)
+
