@@ -62,6 +62,9 @@ opt.TRAIN.SAVE_FREQ = 1
 opt.TRAIN.STEPS_PER_EPOCH = 7000
 opt.TRAIN.RESUME = None if len(sys.argv) == 1 else sys.argv[1]
 
+opt.VAL = edict()
+opt.VAL.BATCH_SIZE = 64
+
 opt.VALID = edict()
 
 if opt.TRAIN.SEED is None:
@@ -114,7 +117,7 @@ train_loader = torch.utils.data.DataLoader(
     train_dataset, batch_size=opt.TRAIN.BATCH_SIZE, shuffle=opt.TRAIN.SHUFFLE, num_workers=opt.TRAIN.WORKERS)
 
 test_loader = torch.utils.data.DataLoader(
-    val_dataset, batch_size=opt.TRAIN.BATCH_SIZE, shuffle=False, num_workers=opt.TRAIN.WORKERS)
+    val_dataset, batch_size=opt.VAL.BATCH_SIZE, shuffle=False, num_workers=opt.TRAIN.WORKERS)
 
 
 # create model
@@ -171,6 +174,9 @@ def train(train_loader, model, criterion, optimizer, epoch):
     # switch to train mode
     model.train()
 
+    print("total batches:", len(train_loader))
+    num_steps = min(len(train_loader), opt.TRAIN.STEPS_PER_EPOCH)
+
     end = time.time()
     for i, (input_, target) in enumerate(train_loader):
         if i >= opt.TRAIN.STEPS_PER_EPOCH:
@@ -201,7 +207,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
         end = time.time()
 
         if i % opt.TRAIN.PRINT_FREQ == 0:
-            logger.info(f'{epoch} [{i}/{opt.TRAIN.STEPS_PER_EPOCH}]\t'
+            logger.info(f'{epoch} [{i}/{num_steps}]\t'
                         f'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                         f'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
                         f'Loss {losses.val:.4f} ({losses.avg:.4f})\t'
@@ -296,6 +302,6 @@ for epoch in range(last_epoch+1, opt.TRAIN.EPOCHS+1):
         save_checkpoint(data_to_save, f'{opt.EXPERIMENT.CODENAME}_[{epoch}]_{map3:.03f}.pk')
 
     if is_best:
-        save_checkpoint(data_to_save, f'{opt.EXPERIMENT.CODENAME}_best_model.pk')
+        save_checkpoint(data_to_save, f'{opt.EXPERIMENT.CODENAME}_best_[{epoch}]_{map3:.03f}.pk')
 
 logger.info(f'Best MAP@3 for single crop: {best_map3:.05f}')

@@ -151,7 +151,7 @@ class DatasetFolder(data.Dataset):
             return sample, self.targets[index]
 
     def __len__(self) -> int:
-        return len(self.samples)
+        return self.samples.shape[0]
 
     def __repr__(self) -> str:
         fmt_str = 'Dataset ' + self.__class__.__name__ + '\n'
