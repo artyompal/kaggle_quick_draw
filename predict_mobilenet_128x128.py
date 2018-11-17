@@ -24,7 +24,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from MobileNetV2 import MobileNetV2
-from utils import cfg, create_logger
+from utils import create_logger
 from data_loader import DatasetFolder
 
 
@@ -39,6 +39,20 @@ timestamp = datetime.datetime.now().strftime("%y-%m-%d-%H-%M")
 if len(sys.argv) != 4:
     print(f'usage: {sys.argv[0]} predict.npz /path/to/model.pk /path/to/test/')
     sys.exit()
+
+
+cfg = edict()
+
+cfg.ROOT_DIR = ".."
+cfg.EXPERIMENT_DIR = osp.join(cfg.ROOT_DIR, 'models')
+if not osp.exists(cfg.EXPERIMENT_DIR):
+    os.makedirs(cfg.EXPERIMENT_DIR)
+
+cfg.DATASET = edict()
+cfg.DATASET.TRAIN_DIR = osp.join(cfg.ROOT_DIR, 'data/train_simple')
+cfg.DATASET.VAL_DIR = osp.join(cfg.ROOT_DIR, 'data/val_simple')
+cfg.DATASET.NUM_CLASSES = 340
+
 
 opt = edict()
 

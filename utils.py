@@ -5,21 +5,6 @@ from easydict import EasyDict as edict
 import torch
 
 
-cfg = edict()
-
-cfg.ROOT_DIR = ".."
-cfg.EXPERIMENT_DIR = osp.join(cfg.ROOT_DIR, 'models')
-if not osp.exists(cfg.EXPERIMENT_DIR):
-    os.makedirs(cfg.EXPERIMENT_DIR)
-
-
-# Prepare the datasets ---------------------------------------------------
-cfg.DATASET = edict()
-cfg.DATASET.TRAIN_DIR = osp.join(cfg.ROOT_DIR, 'data/train')
-cfg.DATASET.VAL_DIR = osp.join(cfg.ROOT_DIR, 'data/val')
-cfg.DATASET.NUM_CLASSES = 340
-
-
 def create_logger(filename, logger_name='logger',
                   file_fmt='%(asctime)s %(levelname)-8s: %(message)s',
                   console_fmt='%(message)s',

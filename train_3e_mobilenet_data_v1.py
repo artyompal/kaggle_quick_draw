@@ -26,13 +26,27 @@ from easydict import EasyDict as edict
 import PIL
 
 from MobileNetV2 import MobileNetV2
-from utils import cfg, create_logger, AverageMeter, accuracy
+from utils import create_logger, AverageMeter, accuracy
 import torchsummary
 from cosine_scheduler import CosineLRWithRestarts
 
 
 cudnn.benchmark = True
 timestamp = datetime.datetime.now().strftime("%y-%m-%d-%H-%M")
+
+
+cfg = edict()
+
+cfg.ROOT_DIR = ".."
+cfg.EXPERIMENT_DIR = osp.join(cfg.ROOT_DIR, 'models')
+if not osp.exists(cfg.EXPERIMENT_DIR):
+    os.makedirs(cfg.EXPERIMENT_DIR)
+
+cfg.DATASET = edict()
+cfg.DATASET.TRAIN_DIR = osp.join(cfg.ROOT_DIR, 'data/train_simple')
+cfg.DATASET.VAL_DIR = osp.join(cfg.ROOT_DIR, 'data/val_simple')
+cfg.DATASET.NUM_CLASSES = 340
+
 
 opt = edict()
 
@@ -306,9 +320,9 @@ for epoch in range(last_epoch+1, opt.TRAIN.EPOCHS+1):
     }
 
     if epoch % opt.TRAIN.SAVE_FREQ == 0:
-        save_checkpoint(data_to_save, f'{opt.EXPERIMENT.CODENAME}_[{epoch:.03d}]_{map3:.03f}.pk')
+        save_checkpoint(data_to_save, f'{opt.EXPERIMENT.CODENAME}_[{epoch:03d}]_{map3:.03f}.pk')
 
     if is_best:
-        save_checkpoint(data_to_save, f'{opt.EXPERIMENT.CODENAME}_best_[{epoch:.03d}]_{map3:.03f}.pk')
+        save_checkpoint(data_to_save, f'{opt.EXPERIMENT.CODENAME}_best_[{epoch:03d}]_{map3:.03f}.pk')
 
 logger.info(f'Best MAP@3 for single crop: {best_map3:.05f}')
