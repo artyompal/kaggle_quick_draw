@@ -10,7 +10,7 @@ MODEL_PATH=$2
 DEST_DIR=$3
 SOURCE_FILES="$4/*.csv"
 
-for csv in $SOURCE_FILES
+for csv in $(ls $SOURCE_FILES | LC_ALL=C sort)
 do
     dst="$(basename -- $csv)"
     dst="${dst%%.*}"
