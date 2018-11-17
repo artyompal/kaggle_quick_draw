@@ -47,6 +47,7 @@ if __name__ == "__main__":
         name = os.path.splitext(os.path.split(train_path)[1])[0]
 
         train_csv = pd.read_csv(train_path)
+        train_csv["word"] = train_csv["word"].apply(lambda s: s.replace(' ', '_'))
         ground_truth = train_csv["word"].values
         filter = np.zeros(train_csv.shape[0], dtype=bool)
 
