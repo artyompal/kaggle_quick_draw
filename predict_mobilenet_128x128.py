@@ -123,7 +123,7 @@ pred_indices = []
 pred_scores = []
 pred_confs = []
 
-model.eval()
+# model.eval()
 
 with torch.no_grad():
     for input in tqdm(test_loader):
