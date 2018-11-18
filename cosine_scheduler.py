@@ -30,7 +30,8 @@ class CosineLRWithRestarts():
     """
 
     def __init__(self, optimizer, batch_size, epoch_size, restart_period=100,
-                 t_mult=2, last_epoch=-1, eta_threshold=1000, verbose=False):
+                 t_mult=2, last_epoch=-1, eta_threshold=1000, verbose=False,
+                 min_lr=0):
         if not isinstance(optimizer, Optimizer):
             raise TypeError('{} is not an Optimizer'.format(
                 type(optimizer).__name__))
@@ -58,6 +59,7 @@ class CosineLRWithRestarts():
         self.restart_period = restart_period
         self.restarts = 0
         self.t_epoch = -1
+        self.min_lr = min_lr
 
     def _schedule_eta(self):
         """
@@ -110,5 +112,5 @@ class CosineLRWithRestarts():
         t_cur = self.t_epoch + next(self.batch_increment)
         for param_group, (lr, weight_decay) in zip(self.optimizer.param_groups,
                                                    self.get_lr(t_cur)):
-            param_group['lr'] = lr
+            param_group['lr'] = max(lr, self.min_lr)
             param_group['weight_decay'] = weight_decay

@@ -148,7 +148,7 @@ if torch.cuda.device_count() == 1:
 optimizer = optim.Adam(model.module.parameters(), opt.TRAIN.LEARNING_RATE)
 lr_scheduler = CosineLRWithRestarts(optimizer, opt.TRAIN.BATCH_SIZE,
     opt.TRAIN.BATCH_SIZE * opt.TRAIN.STEPS_PER_EPOCH,
-    restart_period=50, t_mult=1.2)
+    restart_period=50, t_mult=1.2, min_lr=3e-5)
 
 if opt.TRAIN.RESUME is None:
     last_epoch = 0
