@@ -15,7 +15,7 @@ import torch.backends.cudnn as cudnn
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models as models
-from data_loader_v1 import DatasetFolder
+from data_loader_v4a_time import DatasetFolder
 import logging
 import numpy as np
 import random
@@ -43,8 +43,8 @@ if not osp.exists(cfg.EXPERIMENT_DIR):
     os.makedirs(cfg.EXPERIMENT_DIR)
 
 cfg.DATASET = edict()
-cfg.DATASET.TRAIN_DIR = osp.join(cfg.ROOT_DIR, 'data/train_simple')
-cfg.DATASET.VAL_DIR = osp.join(cfg.ROOT_DIR, 'data/val_simple')
+cfg.DATASET.TRAIN_DIR = osp.join(cfg.ROOT_DIR, 'data/train_full')
+cfg.DATASET.VAL_DIR = osp.join(cfg.ROOT_DIR, 'data/val_full')
 cfg.DATASET.NUM_CLASSES = 340
 
 
