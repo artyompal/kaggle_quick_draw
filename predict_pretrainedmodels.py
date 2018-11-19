@@ -36,8 +36,8 @@ cudnn.benchmark = True
 
 timestamp = datetime.datetime.now().strftime("%y-%m-%d-%H-%M")
 
-if len(sys.argv) != 4:
-    print(f'usage: {sys.argv[0]} predict.npz /path/to/model.pk /path/to/test/')
+if len(sys.argv) != 5:
+    print(f'usage: {sys.argv[0]} <predict.npz> /path/to/model.pk /path/to/test/ <resolution>')
     sys.exit()
 
 
@@ -58,8 +58,8 @@ opt = edict()
 
 opt.MODEL = edict()
 opt.MODEL.PRETRAINED = True
-opt.MODEL.IMAGE_SIZE = 128
-opt.MODEL.INPUT_SIZE = 128 # crop size
+opt.MODEL.IMAGE_SIZE = int(sys.argv[4])
+opt.MODEL.INPUT_SIZE = int(sys.argv[4])
 
 opt.EXPERIMENT = edict()
 opt.EXPERIMENT.CODENAME = 'predict'

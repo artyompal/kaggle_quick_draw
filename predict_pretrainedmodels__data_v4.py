@@ -23,7 +23,7 @@ from easydict import EasyDict as edict
 import pandas as pd
 from tqdm import tqdm
 
-from MobileNetV2 import MobileNetV2
+import pretrainedmodels
 from utils import create_logger
 from data_loader_v1 import DatasetFolder
 
@@ -36,8 +36,8 @@ cudnn.benchmark = True
 
 timestamp = datetime.datetime.now().strftime("%y-%m-%d-%H-%M")
 
-if len(sys.argv) != 4:
-    print(f'usage: {sys.argv[0]} predict.npz /path/to/model.pk /path/to/test/')
+if len(sys.argv) != 5:
+    print(f'usage: {sys.argv[0]} <predict.npz> /path/to/model.pk /path/to/test/ <resolution>')
     sys.exit()
 
 
@@ -58,8 +58,8 @@ opt = edict()
 
 opt.MODEL = edict()
 opt.MODEL.PRETRAINED = True
-opt.MODEL.IMAGE_SIZE = 128
-opt.MODEL.INPUT_SIZE = 128 # crop size
+opt.MODEL.IMAGE_SIZE = int(sys.argv[4])
+opt.MODEL.INPUT_SIZE = int(sys.argv[4])
 
 opt.EXPERIMENT = edict()
 opt.EXPERIMENT.CODENAME = 'predict'
@@ -72,7 +72,7 @@ opt.LOG.LOG_FILE = osp.join(opt.EXPERIMENT.DIR, f'log_{opt.EXPERIMENT.TASK}.txt'
 opt.TEST = edict()
 opt.TEST.CHECKPOINT = sys.argv[2]
 opt.TEST.WORKERS = 12
-opt.TEST.BATCH_SIZE = 128
+opt.TEST.BATCH_SIZE = 256
 opt.TEST.OUTPUT = sys.argv[1]
 
 
@@ -107,11 +107,21 @@ last_checkpoint = torch.load(opt.TEST.CHECKPOINT)
 opt.MODEL.ARCH = last_checkpoint['arch']
 
 # create model
-logger.info("using pre-trained model MobileNet")
-model = MobileNetV2()
+logger.info(f'using pre-trained model {opt.MODEL.ARCH}')
+model = pretrainedmodels.__dict__[opt.MODEL.ARCH](pretrained='imagenet')
 
-model.classifier = nn.Linear(model.last_channel, DATA_INFO.NUM_CLASSES)
-model = torch.nn.DataParallel(model).cuda()
+
+if opt.MODEL.ARCH.startswith('resnet'):
+    assert(opt.MODEL.INPUT_SIZE % 32 == 0)
+    model.avgpool = nn.AvgPool2d(opt.MODEL.INPUT_SIZE // 32, stride=1)
+    model.last_linear = nn.Linear(model.last_linear.in_features, DATA_INFO.NUM_CLASSES)
+    model = torch.nn.DataParallel(model).cuda()
+else:
+    assert(opt.MODEL.INPUT_SIZE % 32 == 0)
+    model.avgpool = nn.AvgPool2d(opt.MODEL.INPUT_SIZE // 32, stride=1)
+    model.last_linear = nn.Linear(model.last_linear.in_features, DATA_INFO.NUM_CLASSES)
+    model = torch.nn.DataParallel(model).cuda()
+
 
 model.module.load_state_dict(last_checkpoint['state_dict'])
 logger.info(f"Checkpoint '{opt.TEST.CHECKPOINT}' was loaded.")

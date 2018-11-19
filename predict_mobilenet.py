@@ -24,8 +24,8 @@ import pandas as pd
 from tqdm import tqdm
 
 from MobileNetV2 import MobileNetV2
-from utils import cfg, create_logger
-from data_loader_v2 import DatasetFolder
+from utils import create_logger
+from data_loader_v1 import DatasetFolder
 
 
 model_names = sorted(name for name in models.__dict__
@@ -36,16 +36,30 @@ cudnn.benchmark = True
 
 timestamp = datetime.datetime.now().strftime("%y-%m-%d-%H-%M")
 
-if len(sys.argv) != 4:
-    print(f'usage: {sys.argv[0]} predict.npz /path/to/model.pk /path/to/test/')
+if len(sys.argv) != 5:
+    print(f'usage: {sys.argv[0]} <predict.npz> /path/to/model.pk /path/to/test/ <resolution>')
     sys.exit()
+
+
+cfg = edict()
+
+cfg.ROOT_DIR = ".."
+cfg.EXPERIMENT_DIR = osp.join(cfg.ROOT_DIR, 'models')
+if not osp.exists(cfg.EXPERIMENT_DIR):
+    os.makedirs(cfg.EXPERIMENT_DIR)
+
+cfg.DATASET = edict()
+cfg.DATASET.TRAIN_DIR = osp.join(cfg.ROOT_DIR, 'data/train_simple')
+cfg.DATASET.VAL_DIR = osp.join(cfg.ROOT_DIR, 'data/val_simple')
+cfg.DATASET.NUM_CLASSES = 340
+
 
 opt = edict()
 
 opt.MODEL = edict()
 opt.MODEL.PRETRAINED = True
-opt.MODEL.IMAGE_SIZE = 128
-opt.MODEL.INPUT_SIZE = 128 # crop size
+opt.MODEL.IMAGE_SIZE = int(sys.argv[4])
+opt.MODEL.INPUT_SIZE = int(sys.argv[4])
 
 opt.EXPERIMENT = edict()
 opt.EXPERIMENT.CODENAME = 'predict'
@@ -58,7 +72,7 @@ opt.LOG.LOG_FILE = osp.join(opt.EXPERIMENT.DIR, f'log_{opt.EXPERIMENT.TASK}.txt'
 opt.TEST = edict()
 opt.TEST.CHECKPOINT = sys.argv[2]
 opt.TEST.WORKERS = 12
-opt.TEST.BATCH_SIZE = 96
+opt.TEST.BATCH_SIZE = 128
 opt.TEST.OUTPUT = sys.argv[1]
 
 
@@ -109,7 +123,7 @@ pred_indices = []
 pred_scores = []
 pred_confs = []
 
-model.eval()
+# model.eval()
 
 with torch.no_grad():
     for input in tqdm(test_loader):
