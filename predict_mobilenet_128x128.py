@@ -25,7 +25,7 @@ from tqdm import tqdm
 
 from MobileNetV2 import MobileNetV2
 from utils import create_logger
-from data_loader import DatasetFolder
+from data_loader_v1 import DatasetFolder
 
 
 model_names = sorted(name for name in models.__dict__
