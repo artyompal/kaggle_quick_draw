@@ -31,6 +31,8 @@ def get_file_table(root: str) -> DefaultDict[str, List[str]]:
 class DatasetFolder(data.Dataset):
     def __init__(self, root: str, transform: Any, num_classes: int, mode: str,
                  image_size: int) -> None:
+        print("created data loader", os.path.basename(__file__))
+
         self.transform = transform
         self.num_classes = num_classes
         self.mode = mode
@@ -94,9 +96,9 @@ class DatasetFolder(data.Dataset):
 
         for i, stroke in enumerate(strokes):
             stroke_num = 255 * i // L
-            min_local_t, max_local_t = min(stroke[2]), max(stroke[2])
-            time_range = max_local_t - min_local_t
-            time_range = max(1, time_range)
+            # min_local_t, max_local_t = min(stroke[2]), max(stroke[2])
+            # time_range = max_local_t - min_local_t
+            # time_range = max(1, time_range)
 
             prev_x = (stroke[0][0] - min_x) * max_dim // range_x
             prev_y = (stroke[1][0] - min_y) * max_dim // range_y

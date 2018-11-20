@@ -31,6 +31,8 @@ def get_file_table(root: str) -> DefaultDict[str, List[str]]:
 class DatasetFolder(data.Dataset):
     def __init__(self, root: str, transform: Any, num_classes: int, mode: str,
                  image_size: int) -> None:
+        print("created data loader", os.path.basename(__file__))
+
         self.transform = transform
         self.num_classes = num_classes
         self.mode = mode
