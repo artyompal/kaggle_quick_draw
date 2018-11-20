@@ -52,6 +52,7 @@ class DatasetFolder(data.Dataset):
         else:
             samples = pd.read_csv(root)
             self.samples = samples["drawing"].values
+            self.countries = samples["countrycode"].values
 
 #     def _load_csv(self, name: str) -> Any:
 #         files = self.file_table[name]

@@ -52,6 +52,7 @@ class DatasetFolder(data.Dataset):
         else:
             samples = pd.read_csv(root)
             self.samples = samples["drawing"].values
+            self.countries = samples["countrycode"].values
 
     def start_new_epoch(self) -> None:
         print("preparing data for a new epoch...")
