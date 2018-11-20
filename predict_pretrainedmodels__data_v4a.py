@@ -25,7 +25,7 @@ from tqdm import tqdm
 
 import pretrainedmodels
 from utils import create_logger
-from data_loader_v4a import DatasetFolder
+from data_loader_v4a_time import DatasetFolder
 
 
 model_names = sorted(name for name in models.__dict__

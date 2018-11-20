@@ -15,7 +15,7 @@ import torch.backends.cudnn as cudnn
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models as models
-from data_loader_v4_row import DatasetFolder
+from data_loader_v4_raw import DatasetFolder
 import logging
 import numpy as np
 import random
