@@ -6,7 +6,7 @@ import torch
 
 
 def create_logger(filename, logger_name='logger',
-                  file_fmt='%(asctime)s %(levelname)-8s: %(message)s',
+                  file_fmt='%(asctime)s %(message)s',
                   console_fmt='%(message)s',
                   file_level=logging.DEBUG, console_level=logging.DEBUG):
 
@@ -14,7 +14,7 @@ def create_logger(filename, logger_name='logger',
     logger.setLevel(logging.DEBUG)
     logger.propagate = False
 
-    file_fmt = logging.Formatter(file_fmt)
+    file_fmt = logging.Formatter(file_fmt, '%m-%d %H:%M:%S')
     log_file = logging.FileHandler(filename)
     log_file.setLevel(file_level)
     log_file.setFormatter(file_fmt)
