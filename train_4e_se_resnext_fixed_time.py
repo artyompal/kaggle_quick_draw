@@ -54,7 +54,7 @@ opt.MODEL = edict()
 opt.MODEL.ARCH = 'se_resnext50_32x4d'
 opt.MODEL.PRETRAINED = True
 opt.MODEL.IMAGE_SIZE = 224
-opt.MODEL.INPUT_SIZE = 224 # crop size
+opt.MODEL.INPUT_SIZE = 224
 
 opt.EXPERIMENT = edict()
 opt.EXPERIMENT.CODENAME = os.path.splitext(os.path.basename(__file__))[0]
@@ -65,7 +65,7 @@ opt.LOG = edict()
 opt.LOG.LOG_FILE = osp.join(opt.EXPERIMENT.DIR, f'log_{opt.EXPERIMENT.TASK}.txt')
 
 opt.TRAIN = edict()
-opt.TRAIN.BATCH_SIZE = 72
+opt.TRAIN.BATCH_SIZE = 192
 opt.TRAIN.SHUFFLE = True
 opt.TRAIN.WORKERS = 12
 opt.TRAIN.PRINT_FREQ = 20
