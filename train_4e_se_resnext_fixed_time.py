@@ -70,12 +70,16 @@ opt.TRAIN.SHUFFLE = True
 opt.TRAIN.WORKERS = 12
 opt.TRAIN.PRINT_FREQ = 20
 opt.TRAIN.SEED = 7
-opt.TRAIN.LEARNING_RATE = 1e-3
+opt.TRAIN.LEARNING_RATE = 1e-4
 opt.TRAIN.EPOCHS = 1000
 opt.TRAIN.VAL_SUFFIX = '7'
 opt.TRAIN.SAVE_FREQ = 1
 opt.TRAIN.STEPS_PER_EPOCH = 7000
 opt.TRAIN.RESUME = None if len(sys.argv) == 1 else sys.argv[1]
+
+opt.TRAIN.COSINE = edict()
+opt.TRAIN.COSINE.PERIOD = 32
+opt.TRAIN.COSINE.COEFF = 1.2
 
 opt.VALID = edict()
 opt.VALID.BATCH_SIZE = 256
@@ -148,7 +152,7 @@ if torch.cuda.device_count() == 1:
 optimizer = optim.Adam(model.module.parameters(), opt.TRAIN.LEARNING_RATE)
 lr_scheduler = CosineLRWithRestarts(optimizer, opt.TRAIN.BATCH_SIZE,
     opt.TRAIN.BATCH_SIZE * opt.TRAIN.STEPS_PER_EPOCH,
-    restart_period=50, t_mult=1.2)
+    restart_period=opt.TRAIN.COSINE.PERIOD, t_mult=opt.TRAIN.COSINE.COEFF)
 
 if opt.TRAIN.RESUME is None:
     last_epoch = 0

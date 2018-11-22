@@ -54,7 +54,7 @@ opt.MODEL = edict()
 opt.MODEL.ARCH = 'se_resnext50_32x4d'
 opt.MODEL.PRETRAINED = True
 opt.MODEL.IMAGE_SIZE = 224
-opt.MODEL.INPUT_SIZE = 224 # crop size
+opt.MODEL.INPUT_SIZE = 224
 
 opt.EXPERIMENT = edict()
 opt.EXPERIMENT.CODENAME = os.path.splitext(os.path.basename(__file__))[0]
@@ -67,7 +67,7 @@ opt.LOG.LOG_FILE = osp.join(opt.EXPERIMENT.DIR, f'log_{opt.EXPERIMENT.TASK}.txt'
 opt.TRAIN = edict()
 opt.TRAIN.BATCH_SIZE = 150
 opt.TRAIN.SHUFFLE = True
-opt.TRAIN.WORKERS = 1 # 12
+opt.TRAIN.WORKERS = 12
 opt.TRAIN.PRINT_FREQ = 20
 opt.TRAIN.SEED = 7
 opt.TRAIN.LEARNING_RATE = 1e-3
@@ -82,6 +82,7 @@ opt.TRAIN.COSINE.PERIOD = 16
 opt.TRAIN.COSINE.COEFF = 1.2
 
 opt.VALID = edict()
+opt.VALID.BATCH_SIZE = 256
 
 if opt.TRAIN.SEED is None:
     opt.TRAIN.SEED = int(time.time())
@@ -133,7 +134,7 @@ train_loader = torch.utils.data.DataLoader(
     train_dataset, batch_size=opt.TRAIN.BATCH_SIZE, shuffle=opt.TRAIN.SHUFFLE, num_workers=opt.TRAIN.WORKERS)
 
 test_loader = torch.utils.data.DataLoader(
-    val_dataset, batch_size=opt.TRAIN.BATCH_SIZE, shuffle=False, num_workers=opt.TRAIN.WORKERS)
+    val_dataset, batch_size=opt.VALID.BATCH_SIZE, shuffle=False, num_workers=opt.TRAIN.WORKERS)
 
 
 # create model
