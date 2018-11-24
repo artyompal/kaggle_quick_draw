@@ -25,8 +25,8 @@ from tqdm import tqdm
 
 import pretrainedmodels
 from utils import create_logger
-from data_loader_v1 import DatasetFolder
 
+from data_loader import get_data_loader
 
 model_names = sorted(name for name in models.__dict__
     if name.islower() and not name.startswith("__")
@@ -36,8 +36,8 @@ cudnn.benchmark = True
 
 timestamp = datetime.datetime.now().strftime("%y-%m-%d-%H-%M")
 
-if len(sys.argv) != 5:
-    print(f'usage: {sys.argv[0]} <predict.npz> /path/to/model.pk /path/to/test/ <resolution>')
+if len(sys.argv) != 6:
+    print(f'usage: {sys.argv[0]} <predict.npz> /path/to/model.pk /path/to/test/ <resolution> <data_loader>')
     sys.exit()
 
 
@@ -95,9 +95,9 @@ transform_test = transforms.Compose([
                           std = [ 0.229, 0.224, 0.225 ]),
 ])
 
-test_dataset = DatasetFolder(sys.argv[3], transform_test,
-                              DATA_INFO.NUM_CLASSES, "test",
-                              opt.MODEL.INPUT_SIZE)
+test_dataset = get_data_loader(sys.argv[5], sys.argv[3], transform_test,
+                               DATA_INFO.NUM_CLASSES, "test",
+                               opt.MODEL.INPUT_SIZE)
 logger.info(f'{len(test_dataset)} images are found for test')
 
 test_loader = torch.utils.data.DataLoader(

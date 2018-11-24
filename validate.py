@@ -29,7 +29,6 @@ from utils import create_logger, AverageMeter, accuracy
 import torchsummary
 from cosine_scheduler import CosineLRWithRestarts
 
-# from data_loader_v4e_gtime import DatasetFolder
 from data_loader import get_data_loader
 
 cudnn.benchmark = True
