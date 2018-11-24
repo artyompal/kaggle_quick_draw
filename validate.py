@@ -185,10 +185,10 @@ def validate(val_loader, model, criterion):
                 logger.info(f'Test {epoch} [{i}/{len(val_loader)}]\t'
                             f'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                             f'Loss {losses.val:.4f} ({losses.avg:.4f})\t'
-                            f'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
-                            f'Prec@3 {top3.val:.3f} ({top3.avg:.3f})')
+                            f'Prec@1 {top1.val:.3f} ({top1.avg:.5f})\t'
+                            f'Prec@3 {top3.val:.3f} ({top3.avg:.5f})')
 
-    logger.info(f'MAP@3 {top3.avg:.3f}')
+    logger.info(f'MAP@3 {top3.avg:.5f}')
 
     val_losses.append(losses.avg)
     val_top1.append(top1.avg)
