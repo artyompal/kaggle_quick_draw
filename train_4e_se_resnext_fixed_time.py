@@ -65,7 +65,7 @@ opt.LOG = edict()
 opt.LOG.LOG_FILE = osp.join(opt.EXPERIMENT.DIR, f'log_{opt.EXPERIMENT.TASK}.txt')
 
 opt.TRAIN = edict()
-opt.TRAIN.BATCH_SIZE = 192
+opt.TRAIN.BATCH_SIZE = 130
 opt.TRAIN.SHUFFLE = True
 opt.TRAIN.WORKERS = 12
 opt.TRAIN.PRINT_FREQ = 20
