@@ -49,8 +49,6 @@ if not osp.exists(cfg.EXPERIMENT_DIR):
     os.makedirs(cfg.EXPERIMENT_DIR)
 
 cfg.DATASET = edict()
-cfg.DATASET.TRAIN_DIR = osp.join(cfg.ROOT_DIR, 'data/train_simple')
-cfg.DATASET.VAL_DIR = osp.join(cfg.ROOT_DIR, 'data/val_simple')
 cfg.DATASET.NUM_CLASSES = 340
 
 
