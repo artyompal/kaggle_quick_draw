@@ -30,6 +30,7 @@ if __name__ == '__main__':
         backup_name = f'{orig_name[:-3]}.bak'
 
         print('new_name', new_name, 'backup_name', backup_name)
-        copyfile(orig_name, new_name)
-        os.rename(orig_name, backup_name)
+        if orig_name != new_name:
+            copyfile(orig_name, new_name)
+            os.rename(orig_name, backup_name)
 

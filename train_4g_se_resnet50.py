@@ -52,7 +52,6 @@ opt = edict()
 
 opt.MODEL = edict()
 opt.MODEL.ARCH = 'se_resnet50'
-opt.MODEL.PRETRAINED = True
 opt.MODEL.IMAGE_SIZE = 224
 opt.MODEL.INPUT_SIZE = 224
 
@@ -242,8 +241,8 @@ def validate(val_loader, model, criterion):
     top1 = AverageMeter()
     top3 = AverageMeter()
 
-#     # switch to evaluate mode
-#     model.eval()
+    # switch to evaluate mode
+    model.eval()
 
     end = time.time()
     with torch.no_grad():
