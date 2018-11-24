@@ -15,7 +15,6 @@ import torch.backends.cudnn as cudnn
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models as models
-from data_loader_v4e_gtime import DatasetFolder
 import logging
 import numpy as np
 import random
@@ -30,12 +29,14 @@ from utils import create_logger, AverageMeter, accuracy
 import torchsummary
 from cosine_scheduler import CosineLRWithRestarts
 
+# from data_loader_v4e_gtime import DatasetFolder
+from data_loader import get_data_loader
 
 cudnn.benchmark = True
 timestamp = datetime.datetime.now().strftime("%y-%m-%d-%H-%M")
 
-if len(sys.argv) != 2:
-    print(f'usage: {sys.argv[0]} <model>')
+if len(sys.argv) != 3:
+    print(f'usage: {sys.argv[0]} <model> <data_loader>')
     sys.exit()
 
 
@@ -55,7 +56,6 @@ cfg.DATASET.NUM_CLASSES = 340
 opt = edict()
 
 opt.MODEL = edict()
-opt.MODEL.ARCH = 'se_resnext50_32x4d'
 opt.MODEL.IMAGE_SIZE = 224
 opt.MODEL.INPUT_SIZE = 224
 
@@ -116,7 +116,7 @@ transform_val = transforms.Compose([
 ])
 
 
-val_dataset = DatasetFolder(DATA_INFO.VAL_DIR, transform_val,
+val_dataset = get_data_loader(sys.argv[2], DATA_INFO.VAL_DIR, transform_val,
                             DATA_INFO.NUM_CLASSES, "val",
                             opt.MODEL.IMAGE_SIZE)
 
@@ -125,18 +125,17 @@ test_loader = torch.utils.data.DataLoader(
 
 
 # create model
-logger.info(f"using a model {opt.MODEL.ARCH}")
-model = pretrainedmodels.__dict__[opt.MODEL.ARCH](pretrained='imagenet')
+last_checkpoint = torch.load(opt.TRAIN.RESUME)
+model_arch = last_checkpoint['arch']
+logger.info(f"using a model {model_arch}")
+model = pretrainedmodels.__dict__[model_arch](pretrained='imagenet')
 
 assert(opt.MODEL.INPUT_SIZE % 32 == 0)
 model.avgpool = nn.AvgPool2d(opt.MODEL.INPUT_SIZE // 32, stride=1)
 model.last_linear = nn.Linear(model.last_linear.in_features, DATA_INFO.NUM_CLASSES)
 model = torch.nn.DataParallel(model).cuda()
 
-last_checkpoint = torch.load(opt.TRAIN.RESUME)
-assert(last_checkpoint['arch']==opt.MODEL.ARCH)
 model.module.load_state_dict(last_checkpoint['state_dict'])
-# optimizer.load_state_dict(last_checkpoint['optimizer'])
 logger.info(f"Checkpoint {opt.TRAIN.RESUME} was loaded.")
 
 epoch = last_checkpoint['epoch']
@@ -209,4 +208,3 @@ try:
     map3 = validate(test_loader, model, criterion)
 except KeyboardInterrupt:
     logger.info("iterrupted")
-
