@@ -9,7 +9,7 @@ if __name__ == '__main__':
         print(f'usage: {sys.argv[0]} <directory>')
         sys.exit()
 
-    for orig_name in sorted(glob(os.path.join(sys.argv[1], '*.pk'))):
+    for orig_name in reversed(glob(os.path.join(sys.argv[1], '*.pk'))):
         print(f'processing {orig_name}')
 
         if orig_name.find('_best_[') != -1:
