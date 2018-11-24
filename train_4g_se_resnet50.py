@@ -323,9 +323,9 @@ for epoch in range(last_epoch+1, opt.TRAIN.EPOCHS+1):
     }
 
     if epoch % opt.TRAIN.SAVE_FREQ == 0:
-        save_checkpoint(data_to_save, f'{opt.EXPERIMENT.CODENAME}_[{epoch:03d}]_{map3:.03f}.pk')
+        save_checkpoint(data_to_save, f'{opt.EXPERIMENT.CODENAME}_[{epoch:03d}]_{map3:.04f}.pk')
 
     if is_best:
-        save_checkpoint(data_to_save, f'{opt.EXPERIMENT.CODENAME}_best_[{epoch:03d}]_{map3:.03f}.pk')
+        save_checkpoint(data_to_save, f'{opt.EXPERIMENT.CODENAME}_best_[{epoch:03d}]_{map3:.04f}.pk')
 
-logger.info(f'Best MAP@3 for single crop: {best_map3:.05f}')
+logger.info(f'Best MAP@3 for single crop: {best_map3:.04f}')
