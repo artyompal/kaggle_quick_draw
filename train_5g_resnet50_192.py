@@ -52,8 +52,8 @@ opt = edict()
 
 opt.MODEL = edict()
 opt.MODEL.ARCH = 'resnet50'
-opt.MODEL.IMAGE_SIZE = 128
-opt.MODEL.INPUT_SIZE = 128
+opt.MODEL.IMAGE_SIZE = 192
+opt.MODEL.INPUT_SIZE = 192
 
 opt.EXPERIMENT = edict()
 opt.EXPERIMENT.CODENAME = os.path.splitext(os.path.basename(__file__))[0]
@@ -64,7 +64,8 @@ opt.LOG = edict()
 opt.LOG.LOG_FILE = osp.join(opt.EXPERIMENT.DIR, f'log_{opt.EXPERIMENT.TASK}.txt')
 
 opt.TRAIN = edict()
-opt.TRAIN.BATCH_SIZE = 256
+opt.TRAIN.BATCH_SIZE = 64
+opt.TRAIN.ACCUM_BATCHES_COUNT = 4
 opt.TRAIN.SHUFFLE = True
 opt.TRAIN.WORKERS = 12
 opt.TRAIN.PRINT_FREQ = 20
@@ -144,8 +145,8 @@ model.avgpool = nn.AvgPool2d(opt.MODEL.INPUT_SIZE // 32, stride=1)
 model.last_linear = nn.Linear(model.last_linear.in_features, DATA_INFO.NUM_CLASSES)
 model = torch.nn.DataParallel(model).cuda()
 
-if torch.cuda.device_count() == 1:
-    torchsummary.summary(model, (3, opt.MODEL.INPUT_SIZE, opt.MODEL.INPUT_SIZE))
+# if torch.cuda.device_count() == 1:
+#     torchsummary.summary(model, (3, opt.MODEL.INPUT_SIZE, opt.MODEL.INPUT_SIZE))
 
 optimizer = optim.Adam(model.module.parameters(), opt.TRAIN.LEARNING_RATE)
 lr_scheduler = CosineLRWithRestarts(optimizer, opt.TRAIN.BATCH_SIZE,
@@ -193,6 +194,8 @@ def train(train_loader, model, criterion, optimizer, epoch):
     num_steps = min(len(train_loader), opt.TRAIN.STEPS_PER_EPOCH)
 
     end = time.time()
+    optimizer.zero_grad()
+
     for i, (input_, target) in enumerate(train_loader):
         if i >= opt.TRAIN.STEPS_PER_EPOCH:
             break
@@ -205,6 +208,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
         # compute output
         output = model(input_)
         loss = criterion(output, target)
+        loss.backward()
 
         # measure accuracy and record loss
         prec1, prec3 = accuracy(output.data, target, (1, 3))
@@ -212,10 +216,11 @@ def train(train_loader, model, criterion, optimizer, epoch):
         top1.update(prec1.item(), input_.size(0))
         top3.update(prec3.item(), input_.size(0))
 
-        # compute gradient and do SGD step
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+        if (i + 1) % opt.TRAIN.ACCUM_BATCHES_COUNT == 0 or i + 1 == opt.TRAIN.STEPS_PER_EPOCH:
+            # compute gradient and do optimizer step
+            optimizer.step()
+            optimizer.zero_grad()
+
         lr_scheduler.batch_step()
 
         # measure elapsed time
