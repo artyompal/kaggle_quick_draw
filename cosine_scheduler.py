@@ -31,7 +31,7 @@ class CosineLRWithRestarts():
 
     def __init__(self, optimizer, batch_size, epoch_size, restart_period=100,
                  t_mult=2, last_epoch=-1, eta_threshold=1000, verbose=False,
-                 min_lr=0):
+                 min_lr=1e-7):
         if not isinstance(optimizer, Optimizer):
             raise TypeError('{} is not an Optimizer'.format(
                 type(optimizer).__name__))

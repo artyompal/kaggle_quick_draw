@@ -78,7 +78,7 @@ opt.TRAIN.STEPS_PER_EPOCH = 7000
 opt.TRAIN.RESUME = None if len(sys.argv) == 1 else sys.argv[1]
 
 opt.TRAIN.COSINE = edict()
-opt.TRAIN.COSINE.PERIOD = 32
+opt.TRAIN.COSINE.PERIOD = 64
 opt.TRAIN.COSINE.COEFF = 1.2
 
 opt.VALID = edict()
@@ -151,7 +151,7 @@ model = torch.nn.DataParallel(model).cuda()
 optimizer = optim.Adam(model.module.parameters(), opt.TRAIN.LEARNING_RATE)
 lr_scheduler = CosineLRWithRestarts(optimizer, opt.TRAIN.BATCH_SIZE,
     opt.TRAIN.BATCH_SIZE * opt.TRAIN.STEPS_PER_EPOCH,
-    restart_period=opt.TRAIN.COSINE.PERIOD, t_mult=opt.TRAIN.COSINE.COEFF)
+    restart_period=opt.TRAIN.COSINE.PERIOD, t_mult=opt.TRAIN.COSINE.COEFF, min_lr=1e-6)
 
 if opt.TRAIN.RESUME is None:
     last_epoch = 0
