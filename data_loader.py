@@ -10,6 +10,7 @@ import data_loader_v4_raw
 import data_loader_v4a_time
 import data_loader_v4b_country
 import data_loader_v4e_gtime
+import data_loader_v5_6channels
 
 def get_data_loader(name: str, root: str, transform: Any, num_classes: int,
                     mode: str, image_size: int) -> Any:
@@ -29,5 +30,7 @@ def get_data_loader(name: str, root: str, transform: Any, num_classes: int,
         return data_loader_v4b_country.DatasetFolder(root, transform, num_classes, mode, image_size)
     elif name == "data_loader_v4e_gtime":
         return data_loader_v4e_gtime.DatasetFolder(root, transform, num_classes, mode, image_size)
+    elif name == "data_loader_v5_6channels":
+        return data_loader_v5_6channels.DatasetFolder(root, transform, num_classes, mode, image_size)
     else:
         assert False
