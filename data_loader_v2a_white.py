@@ -1,4 +1,5 @@
-""" Data loaders for training & validation. """
+""" Data loaders for training & validation.
+V2: uses raw datasets. They have 3 channels of denormalized data. """
 import json, multiprocessing, os, pickle
 from collections import defaultdict
 from glob import glob
