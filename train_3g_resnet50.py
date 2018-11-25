@@ -240,8 +240,8 @@ def validate(val_loader, model, criterion):
     top1 = AverageMeter()
     top3 = AverageMeter()
 
-#     # switch to evaluate mode
-#     model.eval()
+    # switch to evaluate mode
+    model.eval()
 
     end = time.time()
     with torch.no_grad():
