@@ -10,7 +10,6 @@ import numpy as np, pandas as pd
 import torch.utils.data as data
 from PIL import Image, ImageDraw
 from tqdm import tqdm
-# import matplotlib.pyplot as plt
 
 NpArray = Any
 
@@ -121,6 +120,7 @@ class DatasetFolder(data.Dataset):
             im.save(os.path.join(path, f"{idx:06d}.jpg"))
 
         if DEBUG_SHOW:
+            import matplotlib.pyplot as plt
             plt.imshow(im)
             plt.show()
 
