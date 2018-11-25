@@ -194,7 +194,6 @@ def train(train_loader, model, criterion, optimizer, epoch):
     num_steps = min(len(train_loader), opt.TRAIN.STEPS_PER_EPOCH)
 
     end = time.time()
-    # acc_loss = 0
     optimizer.zero_grad()
 
     for i, (input_, target) in enumerate(train_loader):
@@ -210,7 +209,6 @@ def train(train_loader, model, criterion, optimizer, epoch):
         output = model(input_)
         loss = criterion(output, target)
         loss.backward()
-        # acc_loss += loss
 
         # measure accuracy and record loss
         prec1, prec3 = accuracy(output.data, target, (1, 3))

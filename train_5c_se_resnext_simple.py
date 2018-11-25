@@ -6,7 +6,6 @@ import os.path as osp
 import sys
 
 from typing import *
-from collections import OrderedDict
 
 import torch
 import torch.nn as nn
@@ -46,14 +45,14 @@ cfg.DATASET = edict()
 cfg.DATASET.TRAIN_DIR = osp.join(cfg.ROOT_DIR, 'data/train_simple')
 cfg.DATASET.VAL_DIR = osp.join(cfg.ROOT_DIR, 'data/val_simple')
 cfg.DATASET.NUM_CLASSES = 340
-cfg.DATASET.DATA_LOADER = 'data_loader_v5_6channels'
+cfg.DATASET.DATA_LOADER = 'data_loader_v1'
 
 
 opt = edict()
 
 opt.MODEL = edict()
 opt.MODEL.ARCH = 'se_resnext50_32x4d'
-opt.MODEL.IMAGE_SIZE = 256
+opt.MODEL.IMAGE_SIZE = 224
 opt.MODEL.INPUT_SIZE = 224
 
 opt.EXPERIMENT = edict()
@@ -65,8 +64,8 @@ opt.LOG = edict()
 opt.LOG.LOG_FILE = osp.join(opt.EXPERIMENT.DIR, f'log_{opt.EXPERIMENT.TASK}.txt')
 
 opt.TRAIN = edict()
-opt.TRAIN.BATCH_SIZE = 12
-opt.TRAIN.ACCUM_BATCHES_COUNT = 2
+opt.TRAIN.BATCH_SIZE = 64
+opt.TRAIN.ACCUM_BATCHES_COUNT = 8
 opt.TRAIN.SHUFFLE = True
 opt.TRAIN.WORKERS = 12
 opt.TRAIN.PRINT_FREQ = 20
@@ -107,12 +106,27 @@ logger.info(msg)
 
 DATA_INFO = cfg.DATASET
 
+# Data-loader of training set
+transform_train = transforms.Compose([
+    transforms.RandomHorizontalFlip(),
+    transforms.ToTensor(),
+    transforms.Normalize(mean = [ 0.485, 0.456, 0.406 ],
+                          std = [ 0.229, 0.224, 0.225 ]),
+])
+
+# Data-loader of testing set
+transform_val = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Normalize(mean = [ 0.485, 0.456, 0.406 ],
+                          std = [ 0.229, 0.224, 0.225 ]),
+])
+
 
 train_dataset = get_data_loader(DATA_INFO.DATA_LOADER, DATA_INFO.TRAIN_DIR,
-                                None, DATA_INFO.NUM_CLASSES, "train",
+                                transform_train, DATA_INFO.NUM_CLASSES, "train",
                                 opt.MODEL.IMAGE_SIZE)
 val_dataset = get_data_loader(DATA_INFO.DATA_LOADER, DATA_INFO.VAL_DIR,
-                              None, DATA_INFO.NUM_CLASSES, "val",
+                              transform_val, DATA_INFO.NUM_CLASSES, "val",
                               opt.MODEL.IMAGE_SIZE)
 
 train_loader = torch.utils.data.DataLoader(
@@ -124,53 +138,34 @@ test_loader = torch.utils.data.DataLoader(
 
 # create model
 logger.info(f"using pre-trained model {opt.MODEL.ARCH}")
-# model = pretrainedmodels.__dict__[opt.MODEL.ARCH](pretrained='imagenet')
-model = pretrainedmodels.__dict__[opt.MODEL.ARCH](num_classes=DATA_INFO.NUM_CLASSES,
-                                                  pretrained=None)
+model = pretrainedmodels.__dict__[opt.MODEL.ARCH](pretrained='imagenet')
+
 assert(opt.MODEL.INPUT_SIZE % 32 == 0)
-
-# load weights, if any
-if opt.TRAIN.RESUME is None:
-    last_epoch = 0
-    logger.info(f"Training will start from epoch {last_epoch+1}")
-else:
-    last_checkpoint = torch.load(opt.TRAIN.RESUME)
-    assert(last_checkpoint['arch']==opt.MODEL.ARCH)
-    model.load_state_dict(last_checkpoint['state_dict'])
-    logger.info(f"Checkpoint {opt.TRAIN.RESUME} was loaded.")
-
-    last_epoch = last_checkpoint['epoch']
-    logger.info(f"Training will be resumed from epoch {last_checkpoint['epoch']}")
-
-# patch the first layer
-channels = 6
-inplanes = 64
-
-layer0_modules = [
-    ('conv1', nn.Conv2d(channels, inplanes, kernel_size=7, stride=2, padding=3,
-                        bias=False)),
-    ('bn1', nn.BatchNorm2d(inplanes)),
-    ('relu1', nn.ReLU(inplace=True)),
-]
-
-layer0_modules.append(('pool', nn.MaxPool2d(3, stride=2, ceil_mode=True)))
-model.layer0 = nn.Sequential(OrderedDict(layer0_modules))
-
-model.last_linear = nn.Linear(model.last_linear.in_features, DATA_INFO.NUM_CLASSES)
 model.avgpool = nn.AvgPool2d(opt.MODEL.INPUT_SIZE // 32, stride=1)
 model.last_linear = nn.Linear(model.last_linear.in_features, DATA_INFO.NUM_CLASSES)
 model = torch.nn.DataParallel(model).cuda()
 
 if torch.cuda.device_count() == 1:
-    torchsummary.summary(model, (channels, opt.MODEL.INPUT_SIZE, opt.MODEL.INPUT_SIZE))
+    torchsummary.summary(model, (3, opt.MODEL.INPUT_SIZE, opt.MODEL.INPUT_SIZE))
 
 optimizer = optim.Adam(model.module.parameters(), opt.TRAIN.LEARNING_RATE)
-if opt.TRAIN.RESUME is not None:
-    optimizer.load_state_dict(last_checkpoint['optimizer'])
-
 lr_scheduler = CosineLRWithRestarts(optimizer, opt.TRAIN.BATCH_SIZE,
     opt.TRAIN.BATCH_SIZE * opt.TRAIN.STEPS_PER_EPOCH,
     restart_period=opt.TRAIN.COSINE.PERIOD, t_mult=opt.TRAIN.COSINE.COEFF)
+
+if opt.TRAIN.RESUME is None:
+    last_epoch = 0
+    logger.info(f"Training will start from epoch {last_epoch+1}")
+
+else:
+    last_checkpoint = torch.load(opt.TRAIN.RESUME)
+    assert(last_checkpoint['arch']==opt.MODEL.ARCH)
+    model.module.load_state_dict(last_checkpoint['state_dict'])
+    optimizer.load_state_dict(last_checkpoint['optimizer'])
+    logger.info(f"Checkpoint {opt.TRAIN.RESUME} was loaded.")
+
+    last_epoch = last_checkpoint['epoch']
+    logger.info(f"Training will be resumed from epoch {last_checkpoint['epoch']}")
 
 
 train_losses: List[float] = []
