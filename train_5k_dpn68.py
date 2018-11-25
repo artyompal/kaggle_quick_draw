@@ -140,8 +140,9 @@ logger.info(f"using pre-trained model {opt.MODEL.ARCH}")
 model = pretrainedmodels.__dict__[opt.MODEL.ARCH](pretrained='imagenet')
 
 assert(opt.MODEL.INPUT_SIZE % 32 == 0)
-print(model)
 model.last_linear = nn.Conv2d(model.last_linear.in_channels, DATA_INFO.NUM_CLASSES, kernel_size=1, bias=True)
+print(model)
+
 model = torch.nn.DataParallel(model).cuda()
 
 # if torch.cuda.device_count() == 1:
