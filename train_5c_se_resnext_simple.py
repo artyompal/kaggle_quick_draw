@@ -145,8 +145,8 @@ model.avgpool = nn.AvgPool2d(opt.MODEL.INPUT_SIZE // 32, stride=1)
 model.last_linear = nn.Linear(model.last_linear.in_features, DATA_INFO.NUM_CLASSES)
 model = torch.nn.DataParallel(model).cuda()
 
-if torch.cuda.device_count() == 1:
-    torchsummary.summary(model, (3, opt.MODEL.INPUT_SIZE, opt.MODEL.INPUT_SIZE))
+# if torch.cuda.device_count() == 1:
+#     torchsummary.summary(model, (3, opt.MODEL.INPUT_SIZE, opt.MODEL.INPUT_SIZE))
 
 optimizer = optim.Adam(model.module.parameters(), opt.TRAIN.LEARNING_RATE)
 lr_scheduler = CosineLRWithRestarts(optimizer, opt.TRAIN.BATCH_SIZE,

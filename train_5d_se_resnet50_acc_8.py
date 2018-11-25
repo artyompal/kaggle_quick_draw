@@ -51,7 +51,7 @@ cfg.DATASET.DATA_LOADER = 'data_loader_v4e_gtime'
 opt = edict()
 
 opt.MODEL = edict()
-opt.MODEL.ARCH = 'se_resnext50_32x4d'
+opt.MODEL.ARCH = 'se_resnet50'
 opt.MODEL.IMAGE_SIZE = 224
 opt.MODEL.INPUT_SIZE = 224
 
@@ -64,8 +64,8 @@ opt.LOG = edict()
 opt.LOG.LOG_FILE = osp.join(opt.EXPERIMENT.DIR, f'log_{opt.EXPERIMENT.TASK}.txt')
 
 opt.TRAIN = edict()
-opt.TRAIN.BATCH_SIZE = 72
-opt.TRAIN.ACCUM_BATCHES_COUNT = 7
+opt.TRAIN.BATCH_SIZE = 64
+opt.TRAIN.ACCUM_BATCHES_COUNT = 8
 opt.TRAIN.SHUFFLE = True
 opt.TRAIN.WORKERS = 12
 opt.TRAIN.PRINT_FREQ = 20

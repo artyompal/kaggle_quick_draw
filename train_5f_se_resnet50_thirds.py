@@ -42,16 +42,16 @@ if not osp.exists(cfg.EXPERIMENT_DIR):
     os.makedirs(cfg.EXPERIMENT_DIR)
 
 cfg.DATASET = edict()
-cfg.DATASET.TRAIN_DIR = osp.join(cfg.ROOT_DIR, 'data/train_full')
-cfg.DATASET.VAL_DIR = osp.join(cfg.ROOT_DIR, 'data/val_full')
+cfg.DATASET.TRAIN_DIR = osp.join(cfg.ROOT_DIR, 'data/train_simple')
+cfg.DATASET.VAL_DIR = osp.join(cfg.ROOT_DIR, 'data/val_simple')
 cfg.DATASET.NUM_CLASSES = 340
-cfg.DATASET.DATA_LOADER = 'data_loader_v4e_gtime'
+cfg.DATASET.DATA_LOADER = 'data_loader_v6_3channels'
 
 
 opt = edict()
 
 opt.MODEL = edict()
-opt.MODEL.ARCH = 'se_resnext50_32x4d'
+opt.MODEL.ARCH = 'se_resnet50'
 opt.MODEL.IMAGE_SIZE = 224
 opt.MODEL.INPUT_SIZE = 224
 
@@ -64,8 +64,8 @@ opt.LOG = edict()
 opt.LOG.LOG_FILE = osp.join(opt.EXPERIMENT.DIR, f'log_{opt.EXPERIMENT.TASK}.txt')
 
 opt.TRAIN = edict()
-opt.TRAIN.BATCH_SIZE = 72
-opt.TRAIN.ACCUM_BATCHES_COUNT = 7
+opt.TRAIN.BATCH_SIZE = 64
+opt.TRAIN.ACCUM_BATCHES_COUNT = 8
 opt.TRAIN.SHUFFLE = True
 opt.TRAIN.WORKERS = 12
 opt.TRAIN.PRINT_FREQ = 20
