@@ -108,7 +108,7 @@ if __name__ == "__main__":
 
     for model in sys.argv[2:]:
         model_name = os.path.splitext(os.path.basename(model))[0]
-        print("processing model", model_name)
+        print("\nprocessing model", model_name)
 
         # parse a py file to get these options
         data_loader, resolution = get_model_params(model_name)
