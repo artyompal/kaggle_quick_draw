@@ -15,7 +15,7 @@ import torch.backends.cudnn as cudnn
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torchvision.models as models
-from data_loader_v1 import DatasetFolder
+from data_loader import get_data_loader
 import logging
 import numpy as np
 import random
@@ -32,7 +32,6 @@ from cosine_scheduler import CosineLRWithRestarts
 
 
 cudnn.benchmark = True
-timestamp = datetime.datetime.now().strftime("%y-%m-%d-%H-%M")
 
 
 cfg = edict()
@@ -46,6 +45,7 @@ cfg.DATASET = edict()
 cfg.DATASET.TRAIN_DIR = osp.join(cfg.ROOT_DIR, 'data/train_simple')
 cfg.DATASET.VAL_DIR = osp.join(cfg.ROOT_DIR, 'data/val_simple')
 cfg.DATASET.NUM_CLASSES = 340
+cfg.DATASET.DATA_LOADER = 'data_loader_v1'
 
 
 opt = edict()
@@ -117,19 +117,18 @@ transform_val = transforms.Compose([
 ])
 
 
-train_dataset = DatasetFolder(DATA_INFO.TRAIN_DIR, transform_train,
-                              DATA_INFO.NUM_CLASSES, "train",
+train_dataset = get_data_loader(DATA_INFO.DATA_LOADER, DATA_INFO.TRAIN_DIR,
+                                transform_train, DATA_INFO.NUM_CLASSES, "train",
+                                opt.MODEL.IMAGE_SIZE)
+val_dataset = get_data_loader(DATA_INFO.DATA_LOADER, DATA_INFO.VAL_DIR,
+                              transform_val, DATA_INFO.NUM_CLASSES, "val",
                               opt.MODEL.IMAGE_SIZE)
-val_dataset = DatasetFolder(DATA_INFO.VAL_DIR, transform_val,
-                            DATA_INFO.NUM_CLASSES, "val",
-                            opt.MODEL.IMAGE_SIZE)
-
 
 train_loader = torch.utils.data.DataLoader(
     train_dataset, batch_size=opt.TRAIN.BATCH_SIZE, shuffle=opt.TRAIN.SHUFFLE, num_workers=opt.TRAIN.WORKERS)
 
 test_loader = torch.utils.data.DataLoader(
-    val_dataset, batch_size=opt.TRAIN.BATCH_SIZE, shuffle=False, num_workers=opt.TRAIN.WORKERS)
+    val_dataset, batch_size=opt.VALID.BATCH_SIZE, shuffle=False, num_workers=opt.TRAIN.WORKERS)
 
 
 # create model

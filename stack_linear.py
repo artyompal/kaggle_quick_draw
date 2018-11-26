@@ -84,8 +84,12 @@ def get_model_params(model_name: str) -> Tuple[str, str]:
             if line.find("opt.MODEL.IMAGE_SIZE =") != -1:
                 resolution = line.split("=")[1].strip()
 
-    if data_loader is None or resolution is None:
-        print("could not parse model", model_name)
+    if data_loader is None:
+        print("could not parse model", model_name, "data loader not detected")
+        assert False
+
+    if resolution is None:
+        print("could not parse model", model_name, "resolution not detected")
         assert False
 
     print(f"data_loader='{data_loader}', resolution='{resolution}'")
@@ -105,6 +109,21 @@ if __name__ == "__main__":
         sys.exit(0)
 
     submission = sys.argv[1]
+    print("predicting on test")
+
+    for model in sys.argv[2:]:
+        model_name = os.path.splitext(os.path.basename(model))[0]
+        print("\nprocessing model", model_name)
+
+        # parse a py file to get these options
+        data_loader, resolution = get_model_params(model_name)
+        use_simple_data = data_loader == "data_loader_v1"
+
+        pred_test = f"../output/pred_test_{model_name}.npz"
+        source = "test_simplified" if use_simple_data else "test_raw"
+        predict(model, pred_test, f"../data/{source}.csv")
+
+    print("predicting on validation")
 
     for model in sys.argv[2:]:
         model_name = os.path.splitext(os.path.basename(model))[0]
@@ -117,10 +136,6 @@ if __name__ == "__main__":
         pred_train = f"../output/pred_train_{model_name}.npz"
         source = "validation_simple" if use_simple_data else "validation_full"
         predict(model, pred_train, f"../data/{source}.csv")
-
-        pred_test = f"../output/pred_test_{model_name}.npz"
-        source = "test_simplified" if use_simple_data else "test_raw"
-        predict(model, pred_test, f"../data/{source}.csv")
 
 
     # predicts = load_prediction(sys.argv[2])
