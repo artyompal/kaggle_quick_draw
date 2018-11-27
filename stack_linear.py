@@ -105,7 +105,7 @@ def predict(model: str, dest: str, csv: str) -> None:
 
 if __name__ == "__main__":
     if len(sys.argv) < 4:
-        print(f"usage: {sys.argv[0]} <submission.csv> <model1.npz> ...")
+        print(f"usage: {sys.argv[0]} <submission.csv> <model1.npy> ...")
         sys.exit(0)
 
     submission = sys.argv[1]
@@ -119,7 +119,7 @@ if __name__ == "__main__":
         data_loader, resolution = get_model_params(model_name)
         use_simple_data = data_loader == "data_loader_v1"
 
-        pred_test = f"../output/pred_test_{model_name}.npz"
+        pred_test = f"../output/pred_test_{model_name}.npy"
         source = "test_simplified" if use_simple_data else "test_raw"
         predict(model, pred_test, f"../data/{source}.csv")
 
@@ -133,7 +133,7 @@ if __name__ == "__main__":
         data_loader, resolution = get_model_params(model_name)
         use_simple_data = data_loader == "data_loader_v1"
 
-        pred_train = f"../output/pred_train_{model_name}.npz"
+        pred_train = f"../output/pred_train_{model_name}.npy"
         source = "validation_simple" if use_simple_data else "validation_full"
         predict(model, pred_train, f"../data/{source}.csv")
 

@@ -127,8 +127,8 @@ logger.info(f"Checkpoint '{opt.TEST.CHECKPOINT}' was loaded.")
 last_epoch = last_checkpoint['epoch']
 softmax = torch.nn.Softmax(dim=1).cuda()
 
-pred_indices = []
-pred_scores = []
+# pred_indices = []
+# pred_scores = []
 pred_confs = []
 
 # model.eval()
@@ -141,17 +141,18 @@ with torch.no_grad():
         top_scores = top_scores.data.cpu().numpy()
 
         confs = softmax(output)
-        top_confs, _ = torch.topk(confs, k=20)
-        top_confs = top_confs.data.cpu().numpy()
+#         top_confs, _ = torch.topk(confs, k=20)
+#         top_confs = top_confs.data.cpu().numpy()
+#
+#         pred_indices.append(top_indices)
+#         pred_scores.append(top_scores)
+        pred_confs.append(confs)
 
-        pred_indices.append(top_indices)
-        pred_scores.append(top_scores)
-        pred_confs.append(top_confs)
-
-pred_indices = np.concatenate(pred_indices)
-pred_scores = np.concatenate(pred_scores)
+# pred_indices = np.concatenate(pred_indices)
+# pred_scores = np.concatenate(pred_scores)
 pred_confs = np.concatenate(pred_confs)
 
-np.savez(opt.TEST.OUTPUT, pred_indices=pred_indices, pred_scores=pred_scores,
-         pred_confs=pred_confs, checkpoint=opt.TEST.CHECKPOINT)
+# np.savez(opt.TEST.OUTPUT, pred_indices=pred_indices, pred_scores=pred_scores, pred_confs=pred_confs, checkpoint=opt.TEST.CHECKPOINT)
+np.save(opt.TEST.OUTPUT, pred_confs)
 logger.info(f"Results were saved to {opt.TEST.OUTPUT}")
+
