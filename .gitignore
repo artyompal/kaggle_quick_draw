@@ -1,5 +1,6 @@
 *.csv
 *.npz
+*.npy
 *.pk
 
 # Byte-compiled / optimized / DLL files

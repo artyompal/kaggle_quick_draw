@@ -23,12 +23,20 @@ def dprint(*args: Any) -> None:
     else:
         assert False
 
-def load_prediction(filename: str) -> Tuple[NpArray, NpArray]:
+def load_prediction(filename: str) -> NpArray:
     """ Reads predicts from file. """
     preds = np.load(filename)
 
     if filename.startswith("seres"):
         preds = torch.nn.functional.softmax(torch.as_tensor(preds)).numpy()
+
+        # remap case-insensitive sorting to case-sensitive
+        remapped_preds = np.zeros_like(preds)
+
+        for idx_from, idx_to in enumerate(remap):
+            remapped_preds[:, idx_to] = preds[:, idx_from]
+
+        preds = remapped_preds
 
     print("preds", preds.shape)
     print(preds)
@@ -39,6 +47,14 @@ if __name__ == "__main__":
         print(f"usage: {sys.argv[0]} <submission.csv> <prediction1.npz> ...")
         sys.exit(0)
 
+    # get list of classes
+    classes = [os.path.basename(f) for f in glob("../data/train_simplified/*.csv")]
+    classes = sorted([s[:-4].replace(' ', '_') for s in classes])
+    classes_indices = {c: i for i, c in enumerate(classes)}
+
+    classes_alt = sorted(classes, key=lambda s: s.lower())
+    remap = [classes_indices[c] for c in classes_alt]
+
     submission = sys.argv[1]
     predicts = load_prediction(sys.argv[2])
 
@@ -47,19 +63,7 @@ if __name__ == "__main__":
 
     # we don't have to normalize, just take top-3 predictions
     predicted_classes = np.argsort(predicts)
-#     dprint(predicted_classes.shape)
-#     dprint(np.argmax(predicts[0]))
-#     dprint(np.amax(predicts[0]))
-
     predicted_classes = predicted_classes[:, -1:-4:-1]
-#     dprint(predicted_classes.shape)
-#     dprint(predicted_classes[0, 0])
-#     dprint(predicts[predicted_classes[0, 0], 0])
-
-
-    # get list of classes
-    classes = [os.path.basename(f) for f in glob("../data/train_simplified/*.csv")]
-    classes = sorted([s[:-4].replace(' ', '_') for s in classes])
 
     # get list of test samples
     test_samples = pd.read_csv("../data/test_raw.csv")["key_id"].values
