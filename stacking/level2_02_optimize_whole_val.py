@@ -43,6 +43,9 @@ if __name__ == '__main__':
     # val_targets = val_df.word.apply(lambda s: class2idx[s]).values
     # print("val_targets", val_targets.shape)
 
+    ###########################################################################
+    # Search
+    ###########################################################################
     def loss_func(weights):
         ''' scipy minimize will pass the weights as a numpy array '''
         weights /= np.sum(weights)
@@ -70,10 +73,36 @@ if __name__ == '__main__':
     # our weights are bound between 0 and 1
     bounds = [(0, 1)] * len(train_predicts)
 
-    res = minimize(loss_func, starting_values, method='Nelder-Mead', bounds=bounds)
-                   # options={'disp': False, 'maxiter': 100000})
-                   # ) #, constraints=cons)
+    # res = minimize(loss_func, starting_values, method='Nelder-Mead', bounds=bounds)
 
-    best_score = res['fun']
-    best_weights = res['x']
-    print("best_score", best_score, "best_weights", best_weights)
+
+    ###########################################################################
+    # Generate results
+    ###########################################################################
+
+    # best_score = res['fun']
+    # best_weights = res['x']
+    # print("best_score", best_score, "best_weights", best_weights)
+    best_weights = np.array([0.09813196, 0.10514239, 0.09795801, 0.10339034, 0.09474373,
+                    0.09506128 , 0.09987863, 0.10032302, 0.10255722, 0.10281342])
+
+    best_weights /= sum(best_weights)
+    final_predict = np.zeros_like(test_predicts[0])
+
+    for weight, prediction in zip(best_weights, test_predicts):
+        final_predict += weight * prediction
+
+    # pred_indices = np.argsort(final_predict, axis=1)[:, 3]
+    # print(pred_indices.shape)
+    # print(pred_indices)
+    predicts = []
+
+    for predict in final_predict:
+        predict = np.argsort(-predict)[:3]
+
+        pred = " ".join([classes[i] for i in predict])
+        predicts.append(pred)
+
+    test_samples = pd.read_csv("../../data/test_raw.csv")["key_id"].values
+    sub = pd.DataFrame({"key_id": test_samples, "word": predicts})
+    sub.to_csv("weighted_blend.csv", index=False)
