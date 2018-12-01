@@ -17,20 +17,20 @@ if __name__ == "__main__":
     small_val = pd.read_csv("val_common_simple.csv")
 
     train_level2 = []
-    val_level2 = []
 
-    difference = big_val[~big_val.drawing.isin(small_val.drawing)]
+    difference = big_val[~big_val.key_id.isin(small_val.key_id)]
     for word, df in tqdm(difference.groupby("word")):
         train_level2.append(df.iloc[:TRAIN_IMGS_PER_CLASS])
 
     train_df = pd.concat(train_level2)
     train_df.to_csv("level2_train.csv", index=False)
 
-    val_df = big_val[~big_val.drawing.isin(train_df.drawing)]
+    val_df = big_val[~big_val.key_id.isin(train_df.key_id)]
+    print(val_df.shape)
     val_df.to_csv("level2_val.csv", index=False)
 
-    train_indices = big_val.index[big_val.drawing.isin(train_df.drawing)]
-    val_indices = big_val.index[big_val.drawing.isin(val_df.drawing)]
+    train_indices = big_val.index[big_val.key_id.isin(train_df.key_id)]
+    val_indices = big_val.index[big_val.key_id.isin(val_df.key_id)]
     print(train_indices)
     print(val_indices)
 
