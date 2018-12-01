@@ -104,21 +104,23 @@ test_loader = torch.utils.data.DataLoader(
 last_checkpoint = torch.load(opt.TEST.CHECKPOINT)
 opt.MODEL.ARCH = last_checkpoint['arch']
 
+
 # create model
 logger.info(f'using pre-trained model {opt.MODEL.ARCH}')
-model = pretrainedmodels.__dict__[opt.MODEL.ARCH](pretrained='imagenet')
-
+model = pretrainedmodels.__dict__[opt.MODEL.ARCH](num_classes=1000, pretrained='imagenet')
+assert(opt.MODEL.INPUT_SIZE % 32 == 0)
 
 if opt.MODEL.ARCH.startswith('resnet'):
-    assert(opt.MODEL.INPUT_SIZE % 32 == 0)
     model.avgpool = nn.AvgPool2d(opt.MODEL.INPUT_SIZE // 32, stride=1)
     model.last_linear = nn.Linear(model.last_linear.in_features, DATA_INFO.NUM_CLASSES)
-    model = torch.nn.DataParallel(model).cuda()
+elif opt.MODEL.ARCH.startswith('dpn'):
+    model.last_linear = nn.Conv2d(model.last_linear.in_channels, DATA_INFO.NUM_CLASSES, kernel_size=1, bias=True)
+    model.test_time_pool = False
 else:
-    assert(opt.MODEL.INPUT_SIZE % 32 == 0)
     model.avgpool = nn.AvgPool2d(opt.MODEL.INPUT_SIZE // 32, stride=1)
     model.last_linear = nn.Linear(model.last_linear.in_features, DATA_INFO.NUM_CLASSES)
-    model = torch.nn.DataParallel(model).cuda()
+
+model = torch.nn.DataParallel(model).cuda()
 
 
 model.module.load_state_dict(last_checkpoint['state_dict'])
@@ -155,4 +157,3 @@ pred_confs = np.concatenate(pred_confs)
 # np.savez(opt.TEST.OUTPUT, pred_indices=pred_indices, pred_scores=pred_scores, pred_confs=pred_confs, checkpoint=opt.TEST.CHECKPOINT)
 np.save(opt.TEST.OUTPUT, pred_confs)
 logger.info(f"Results were saved to {opt.TEST.OUTPUT}")
-

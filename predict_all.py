@@ -68,14 +68,13 @@ def predict(model: str, dest: str, csv: str) -> None:
             sys.exit()
 
 if __name__ == "__main__":
-    if len(sys.argv) < 4:
-        print(f"usage: {sys.argv[0]} <submission.csv> <model1.npy> ...")
+    if len(sys.argv) < 2:
+        print(f"usage: {sys.argv[0]} <model1.npy> ...")
         sys.exit(0)
 
-    submission = sys.argv[1]
     print("predicting on test")
 
-    for model in sys.argv[2:]:
+    for model in sys.argv[1:]:
         model_name = os.path.splitext(os.path.basename(model))[0]
         print("\nprocessing model", model_name)
 
@@ -89,7 +88,7 @@ if __name__ == "__main__":
 
     print("predicting on validation")
 
-    for model in sys.argv[2:]:
+    for model in sys.argv[1:]:
         model_name = os.path.splitext(os.path.basename(model))[0]
         print("\nprocessing model", model_name)
 
@@ -98,6 +97,6 @@ if __name__ == "__main__":
         use_simple_data = data_loader == "data_loader_v1"
 
         pred_train = f"../output/pred_train_{model_name}.npy"
-        source = "validation_simple" if use_simple_data else "validation_full"
-        predict(model, pred_train, f"../data/{source}.csv")
+        source = "simple" if use_simple_data else "full"
+        predict(model, pred_train, f"stacking/val_common_{source}.csv")
 
