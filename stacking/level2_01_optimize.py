@@ -54,7 +54,7 @@ if __name__ == '__main__':
 
         # print("final_predict", final_predict)
         # print("train_targets", train_targets.shape)
-        score = mapk(torch.tensor(final_predict), torch.tensor(train_targets))
+        score = -mapk(torch.tensor(final_predict), torch.tensor(train_targets))
         print("score", score)
         return score
 
@@ -70,5 +70,7 @@ if __name__ == '__main__':
     bounds = [(0, 1)] * len(train_predicts)
 
     res = minimize(loss_func, starting_values, method='SLSQP', bounds=bounds, constraints=cons)
+
     best_score = res['fun']
-    weights = res['x']
+    best_weights = res['x']
+    print("best_score", best_score, "best_weights", best_weights
