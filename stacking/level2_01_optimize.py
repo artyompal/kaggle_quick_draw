@@ -45,6 +45,7 @@ if __name__ == '__main__':
 
     def loss_func(weights):
         ''' scipy minimize will pass the weights as a numpy array '''
+        weights /= np.sum(weights)
         print("weights", weights)
         final_predict = np.zeros_like(train_predicts[0])
 
@@ -60,17 +61,19 @@ if __name__ == '__main__':
 
     # the algorithms need a starting value, right not we chose 0.5 for all weights
     # its better to choose many random starting points and run minimize a few times
-    starting_values = [0.5] * len(train_predicts)
+    starting_values = [1 / len(train_predicts)] * len(train_predicts)
 
     # adding constraints  and a different solver as suggested by user 16universe
     # https://kaggle2.blob.core.windows.net/forum-message-attachments/75655/2393/otto%20model%20weights.pdf?sv=2012-02-12&se=2015-05-03T21%3A22%3A17Z&sr=b&sp=r&sig=rkeA7EJC%2BiQ%2FJ%2BcMpcA4lYQLFh6ubNqs2XAkGtFsAv0%3D
-    cons = ({'type': 'eq','fun': lambda w: 1 - sum(w)})
+    # cons = ({'type': 'eq','fun': lambda w: 1 - sum(w)})
 
     # our weights are bound between 0 and 1
     bounds = [(0, 1)] * len(train_predicts)
 
-    res = minimize(loss_func, starting_values, method='SLSQP', bounds=bounds, constraints=cons)
+    res = minimize(loss_func, starting_values, method='Nelder-Mead', bounds=bounds)
+                   # options={'disp': False, 'maxiter': 100000})
+                   # ) #, constraints=cons)
 
     best_score = res['fun']
     best_weights = res['x']
-    print("best_score", best_score, "best_weights", best_weights
+    print("best_score", best_score, "best_weights", best_weights)
