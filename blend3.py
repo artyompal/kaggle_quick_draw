@@ -27,8 +27,8 @@ def load_prediction(filename: str) -> NpArray:
     """ Reads predicts from file. """
     preds = np.load(filename)
 
-    if filename.startswith("se") or filename.startswith("icase"):
-        if filename.startswith("se"):
+    if filename.startswith("seres") or filename.startswith("icase"):
+        if filename.startswith("seres"):
             preds = torch.nn.functional.softmax(torch.as_tensor(preds)).numpy()
 
         # remap case-insensitive sorting to case-sensitive
@@ -44,8 +44,8 @@ def load_prediction(filename: str) -> NpArray:
     return preds
 
 if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print(f"usage: {sys.argv[0]} <submission.csv> <prediction1.npz> ...")
+    if len(sys.argv) < 4:
+        print(f"usage: {sys.argv[0]} <submission.csv> <predict1> <weight1> ...")
         sys.exit(0)
 
     # get list of classes
@@ -57,10 +57,17 @@ if __name__ == "__main__":
     remap = [classes_indices[c] for c in classes_alt]
 
     submission = sys.argv[1]
-    predicts = load_prediction(sys.argv[2])
 
-    for filename in tqdm(sys.argv[3:]):
-        predicts += load_prediction(filename)
+    args = sys.argv[2:]
+    assert len(args) % 2 == 0
+    predict_names = args[::2]
+    predict_weights = map(float, args[1::2])
+
+
+    predicts = load_prediction(predict_names[0]) * predict_weights[0]
+
+    for filename, weight in zip(predict_names[1:], predict_weights[1:]):
+        predicts += load_prediction(filename) * weight
 
     # we don't have to normalize, just take top-3 predictions
     predicted_classes = np.argsort(predicts)

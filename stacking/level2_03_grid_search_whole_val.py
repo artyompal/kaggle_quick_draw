@@ -10,7 +10,6 @@ import numpy as np, pandas as pd
 from tqdm import tqdm
 
 from metrics import mapk
-from scipy.optimize import minimize
 import torch
 
 
@@ -49,7 +48,7 @@ if __name__ == '__main__':
     def loss_func(weights):
         ''' scipy minimize will pass the weights as a numpy array '''
         weights /= np.sum(weights)
-        print("weights", weights)
+        # print("weights", weights)
         final_predict = np.zeros_like(train_predicts[0])
 
         for weight, prediction in zip(weights, train_predicts):
@@ -58,33 +57,27 @@ if __name__ == '__main__':
 
         # print("final_predict", final_predict)
         # print("train_targets", train_targets.shape)
-        score = -mapk(torch.tensor(final_predict), torch.tensor(train_targets))
+        score = mapk(torch.tensor(final_predict), torch.tensor(train_targets))
         print("score", score)
         return score
 
-    # the algorithms need a starting value, right not we chose 0.5 for all weights
-    # its better to choose many random starting points and run minimize a few times
-    starting_values = [1 / len(train_predicts)] * len(train_predicts)
+    best_score = 0
+    best_weights = np.zeros(train_predicts.shape[0])
 
-    # adding constraints  and a different solver as suggested by user 16universe
-    # https://kaggle2.blob.core.windows.net/forum-message-attachments/75655/2393/otto%20model%20weights.pdf?sv=2012-02-12&se=2015-05-03T21%3A22%3A17Z&sr=b&sp=r&sig=rkeA7EJC%2BiQ%2FJ%2BcMpcA4lYQLFh6ubNqs2XAkGtFsAv0%3D
-    # cons = ({'type': 'eq','fun': lambda w: 1 - sum(w)})
+    while True:
+        weights = np.random.rand(train_predicts.shape[0])
+        weights /= np.sum(weights)
 
-    # our weights are bound between 0 and 1
-    bounds = [(0, 1)] * len(train_predicts)
-
-    # res = minimize(loss_func, starting_values, method='Nelder-Mead', bounds=bounds)
+        score = loss_func(weights)
+        if score > best_score:
+            best_score,best_weights = score, weights
+            print("better score:", best_score)
+            print("best_weights", best_weights)
 
 
     ###########################################################################
     # Generate results
     ###########################################################################
-
-    # best_score = res['fun']
-    # best_weights = res['x']
-    # print("best_score", best_score, "best_weights", best_weights)
-    best_weights = np.array([0.09813196, 0.10514239, 0.09795801, 0.10339034, 0.09474373,
-                    0.09506128 , 0.09987863, 0.10032302, 0.10255722, 0.10281342])
 
     best_weights /= sum(best_weights)
     final_predict = np.zeros_like(test_predicts[0])

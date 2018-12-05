@@ -74,7 +74,7 @@ if __name__ == "__main__":
 
     print("predicting on test")
 
-    for model in sys.argv[1:]:
+    for model in sorted(sys.argv[1:]):
         model_name = os.path.splitext(os.path.basename(model))[0]
         print("\nprocessing model", model_name)
 
@@ -88,7 +88,7 @@ if __name__ == "__main__":
 
     print("predicting on validation")
 
-    for model in sys.argv[1:]:
+    for model in sorted(sys.argv[1:]):
         model_name = os.path.splitext(os.path.basename(model))[0]
         print("\nprocessing model", model_name)
 
@@ -98,5 +98,5 @@ if __name__ == "__main__":
 
         pred_train = f"../output/pred_train_{model_name}.npy"
         source = "simple" if use_simple_data else "full"
-        predict(model, pred_train, f"stacking/val_common_{source}.csv")
+        predict(model, pred_train, f"../data/validation_{source}.csv")
 

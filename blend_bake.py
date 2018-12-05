@@ -27,7 +27,7 @@ def load_prediction(filename: str) -> NpArray:
     """ Reads predicts from file. """
     preds = np.load(filename)
 
-    if filename.startswith("se") or filename.startswith("icase"):
+    if filename.startswith("seres") or filename.startswith("icase"):
         if filename.startswith("se"):
             preds = torch.nn.functional.softmax(torch.as_tensor(preds)).numpy()
 
@@ -45,7 +45,7 @@ def load_prediction(filename: str) -> NpArray:
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print(f"usage: {sys.argv[0]} <submission.csv> <prediction1.npz> ...")
+        print(f"usage: {sys.argv[0]} <blend.npz> <prediction1.npz> ...")
         sys.exit(0)
 
     # get list of classes
@@ -62,18 +62,7 @@ if __name__ == "__main__":
     for filename in tqdm(sys.argv[3:]):
         predicts += load_prediction(filename)
 
-    # we don't have to normalize, just take top-3 predictions
-    predicted_classes = np.argsort(predicts)
-    predicted_classes = predicted_classes[:, -1:-4:-1]
+    # normalize
+    predicts /= len(sys.argv[2:])
+    np.save(sys.argv[1], predicts)
 
-    # get list of test samples
-    test_samples = pd.read_csv("../data/test_raw.csv")["key_id"].values
-
-    # get predictions
-    lines = []
-    for indices in predicted_classes:
-        pred = " ".join([classes[i] for i in indices[:3]])
-        lines.append(pred)
-
-    sub = pd.DataFrame({"key_id": test_samples, "word": lines})
-    sub.to_csv(submission, index=False)

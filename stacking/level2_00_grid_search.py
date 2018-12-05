@@ -18,7 +18,7 @@ def get_classes_list() -> List[str]:
     return sorted(classes, key=lambda s: s.lower())
 
 if __name__ == '__main__':
-    test_paths = list(glob('new/*test*.npy'))
+    test_paths = sorted(glob('new/*test*.npy'))
     train_paths = [s.replace('test', 'train') for s in test_paths]
 
     train_df = pd.read_csv('level2_train.csv')

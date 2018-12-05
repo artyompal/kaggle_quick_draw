@@ -49,31 +49,29 @@ if __name__ == '__main__':
     def loss_func(weights):
         ''' scipy minimize will pass the weights as a numpy array '''
         weights /= np.sum(weights)
-        print("weights", weights)
+        # print("weights", weights)
         final_predict = np.zeros_like(train_predicts[0])
 
         for weight, prediction in zip(weights, train_predicts):
-            # print("weight", weight, "prediction", prediction)
             final_predict += weight * prediction
 
-        # print("final_predict", final_predict)
-        # print("train_targets", train_targets.shape)
         score = -mapk(torch.tensor(final_predict), torch.tensor(train_targets))
         print("score", score)
         return score
 
-    # the algorithms need a starting value, right not we chose 0.5 for all weights
-    # its better to choose many random starting points and run minimize a few times
-    starting_values = [1 / len(train_predicts)] * len(train_predicts)
+    while True:
+        # starting_values = [1 / len(train_predicts)] * len(train_predicts)
+        starting_values = np.random.rand(len(train_predicts))
+        print("starting_values", starting_values)
 
-    # adding constraints  and a different solver as suggested by user 16universe
-    # https://kaggle2.blob.core.windows.net/forum-message-attachments/75655/2393/otto%20model%20weights.pdf?sv=2012-02-12&se=2015-05-03T21%3A22%3A17Z&sr=b&sp=r&sig=rkeA7EJC%2BiQ%2FJ%2BcMpcA4lYQLFh6ubNqs2XAkGtFsAv0%3D
-    # cons = ({'type': 'eq','fun': lambda w: 1 - sum(w)})
+        # adding constraints  and a different solver as suggested by user 16universe
+        # https://kaggle2.blob.core.windows.net/forum-message-attachments/75655/2393/otto%20model%20weights.pdf?sv=2012-02-12&se=2015-05-03T21%3A22%3A17Z&sr=b&sp=r&sig=rkeA7EJC%2BiQ%2FJ%2BcMpcA4lYQLFh6ubNqs2XAkGtFsAv0%3D
+        cons = ({'type': 'eq','fun': lambda w: 1 - sum(w)})
 
-    # our weights are bound between 0 and 1
-    bounds = [(0, 1)] * len(train_predicts)
+        # our weights are bound between 0 and 1
+        bounds = [(0, 1)] * len(train_predicts)
 
-    # res = minimize(loss_func, starting_values, method='Nelder-Mead', bounds=bounds)
+        res = minimize(loss_func, starting_values, method='Nelder-Mead', bounds=bounds)
 
 
     ###########################################################################
