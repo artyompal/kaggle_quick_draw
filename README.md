@@ -9,7 +9,7 @@ I reserved 1.5M samples for validation (every 30th sample). The rest of samples 
 A non-trivial part of this challenge was to understand how to pack vector image information into 3-channel RGB picture (see data_loader-* scripts).
 
 ### Metric
-Metric is MAP@3 (mean average precision of top-3 predictions). Model is allowed to make 3 guesses for every image, however, a correct second guess would multiply its score by 0.5 and a correct third guess would multiply it by 0.33.
+Metric is MAP@3 (mean average precision of top-3 predictions). The model is allowed to make 3 guesses for every image, however, a correct second guess would multiply its score by 0.5 and a correct third guess would multiply it by 0.33.
 
 ### Models
 There are many different model here, ranging from simple ones (MobileNetV2, ResNet34) to quite advanced ones (SE-something):
