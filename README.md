@@ -28,8 +28,10 @@ There are many different model here, ranging from simple ones (MobileNetV2, ResN
 ### Image resolution
 I used image resolutions ranging from 128x128 to 224x224 (default resolution for most ImageNet classification models). Later I found out that 128x128 is _enough for everyone_: it trains twice faster than 192x192, while quality is nearly the same.
 
-### Learning
+### Training
 For most models, I use cosine annealing for periods of 32-64 epochs, increasing with multiplier of 1.2.
+
+The data is very noisy, so big batch size wins. Since it's not possible to use huge batch sizes (like 500 to 1000) because of memory restrictions, I use batch accumulation.
 
 ### Ensemble
 A simple approach (blend2.py) is to blend predictions with some predefined weights, using mean or geometric mean. A better approach (unfortunately, not represented in this repo) is to train LightGBM model on top of all of these first-level models. It performed slightly better in our case (the score improved roughly by 0.001).
